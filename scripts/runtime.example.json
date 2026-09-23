@@ -1,0 +1,8 @@
+{
+  "node": "<本机 node.exe 绝对路径>",
+  "pnpm": "<本机 pnpm.cmd 或 pnpm.mjs 绝对路径>",
+  "python": "<本机真实 Python 3.12 python.exe 绝对路径>",
+  "uv": "D:\\DevTools\\uv\\0.8.22\\uv.exe",
+  "cache": "D:\\DevCache\\SalesBench",
+  "browser": "<本机 Edge 或 Chrome 可执行文件绝对路径>"
+}
