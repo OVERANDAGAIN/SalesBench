@@ -131,6 +131,8 @@ class Engine:
                 view = View(view)
             except (ValueError, TypeError):
                 raise ObservationError("INVALID_QUERY") from None
+            if (listing_id is not None and view != View.PRODUCT) or (seller_id is not None and view not in (View.MARKET, View.PRODUCT, View.PUBLIC, View.PRIVATE)):
+                raise ObservationError("INVALID_QUERY")
             if seller_id is not None and (not _identifier(seller_id) or not isinstance(s.actors.get(seller_id), Seller)):
                 raise ObservationError("SELLER_NOT_FOUND")
             actor = s.actors[actor_id]

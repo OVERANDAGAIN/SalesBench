@@ -1,5 +1,7 @@
 # 接口与职责 v0.1 草案
 
+SB-CORE-001 更新：下文保留 SB-002B 的 Vue 演示契约作为对照，不自动升级为正式协议。独立 Python Engine 骨架已建设，领域拆分、step、同步 Result、Policy 与平台适配差异见 [ENGINE.md](ENGINE.md)。后续业务 API 接入时重新确认 DTO、幂等、通知和持久化提交边界。
+
 状态：**DRAFT / 尚未与 Python 主体确认**。Python 实验主体、Buyer/Seller 策略、消费者模型未提供。
 本文只约束本轮 Vue 和可替换的异步演示服务；不是已定案的正式 HTTP API。
 命名统一由 `frontend/src/domain/types.ts` 实现。所有金额是整数分；时间使用 ISO 8601 UTC；展示层转本地时间。

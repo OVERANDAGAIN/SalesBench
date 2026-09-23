@@ -62,6 +62,8 @@ class DomainTests(unittest.TestCase):
         for actor, view in (("missing", View.MARKET), ("buyer", "everything")):
             with self.subTest(actor=actor), self.assertRaises(ObservationError):
                 engine.observe(actor, view)
+        with self.assertRaises(ObservationError):
+            engine.observe("buyer", View.SELF, seller_id="seller")
 
     def test_ranking_is_explicitly_a_replaceable_test_rule(self):
         engine = Engine(make_setup())

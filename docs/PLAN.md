@@ -4,18 +4,20 @@
 
 2026-09-23 用户授权先建设 Python Experiment Engine Skeleton，再考虑平台持久化接入。执行端 5070，分支 `feat/sb-core-skeleton`，从验收基线 `2ab44d79e5d28d5c0c17b17e3cdb2a5768579408` 创建；不修改或推送 main。
 
-目标：独立 `engine/` 包、明确领域/观察/动作边界、采购到销售的完整内存流程、step、可替换策略、确定性场景和测试。A 基础、B 状态转移及 32 项测试完成；C 场景/交付检查进行中。进度见 [SB-CORE-001](handoffs/SB-CORE-001.md)。
+目标已完成：独立 `engine/` 包、明确领域/观察/动作边界、采购到销售的完整内存流程、step、可替换策略、确定性场景和测试。A / B / C 均完成；Engine 36 项测试和原后端 2 项测试通过，独立 wheel 导入与两轮场景验证通过。设计见 [ENGINE.md](ENGINE.md)，交付见 [SB-CORE-001](handoffs/SB-CORE-001.md)。
+
+下一阶段候选（待新指令）：FastAPI + PostgreSQL 通过 application/adapter 调用 Engine。先确定持久状态恢复/版本、Engine 草稿发布与数据库提交协调、跨进程单写者及持久幂等；本任务没有实现这些能力，也没有接入正式研究模型。
 
 本任务不建设业务 API、数据库、Vue 网络适配器、LLM 或桌面客户端。下文 SB-002B 与原后续计划保留为历史；当前授权顺序以本节为准。
 
-## 本轮边界
+## SB-002B 边界（历史）
 
 唯一工程 `D:\SalesBench`；远端 `https://github.com/OVERANDAGAIN/SalesBench.git`。
 任务 SB-002B，机器 3050，任务分支 `chore/sb-002b-bootstrap`，验收基线分支 `main`。
 2026-09-23 初始确认远端为空，克隆后建立指定任务分支；各实施检查点已推送。
 用户完成视觉验收后，明确授权在确认没有独立 `main` 历史、陌生修改或缺失的验收提交后，以本次收尾提交建立并推送 `main`，保留任务分支。这项授权替代本轮此前只推送任务分支的限制；不强推、不重写历史、不调整 GitHub 默认分支设置。
 
-## 里程碑
+## SB-002B 里程碑（历史）
 
 1. A / 阶段 2B：**完成**。材料归档、工程约定、锁文件、最小 Vue 与 FastAPI 健康检查已完成；类型、构建、后端、HTTP、重启检查通过。
 2. B / 阶段 3：**v0.1 草案完成，待 Python 主体接入时确认**。接口与职责见 `docs/INTERFACES.md`；Python 主体尚未提供，未宣称双方定案，未决研究规则保持隔离。
@@ -25,7 +27,7 @@
 
 本次仅更新验收状态和接力信息；收尾重跑 typecheck、production build、前端 18 项测试、后端 2 项测试，均通过。未修改页面或演示行为，无需重复浏览器自动化。收尾完成后停止，不开始下一阶段实施。
 
-## 后续阶段
+## SB-002B 收尾时的后续计划（历史）
 
 下一阶段：**平台后端最小共享服务：FastAPI 业务 API + PostgreSQL + SQLAlchemy/Alembic + Vue network adapter；正式 Python 实验内核仍待主体交付。**
 

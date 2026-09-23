@@ -11,8 +11,10 @@ from test_domain import make_setup
 
 def stocked_engine(quantity=5, price=300):
     engine = Engine(make_setup(steps_per_demo_day=2))
-    assert engine.execute("seller", Procure("cup-offer", quantity, 100)).ok
-    assert engine.execute("seller", CreateListing("cup-listing", "cup", price, "Test cup")).ok
+    for action in (Procure("cup-offer", quantity, 100), CreateListing("cup-listing", "cup", price, "Test cup")):
+        result = engine.execute("seller", action)
+        if not result.ok:
+            raise AssertionError(f"Fixture action failed: {result.code}")
     return engine
 
 
