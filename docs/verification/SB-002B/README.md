@@ -8,6 +8,7 @@
 - 后端 pytest 2 项：无数据库/凭据的进程健康检查、业务路由未实现。
 - `scripts/verify-health.ps1`：真实 HTTP、Vite 限定代理、后端重启检查，自动清理自有进程。
 - `frontend/tests/browser/run.mjs`：本机 Edge、桌面/窄屏真实页面与交互；结构化结果见 `browser-results.json`。
+- `frontend/tests/browser/preview.mjs`：真实生产构建预览，Vue 导航、六个商品图片正常，测试控制器未暴露；见 `preview-results.json`。
 - 模拟服务测试使用可控时间/失败/外部变更，不安装训练环境。
 
 ## 已发现并修复
@@ -39,6 +40,8 @@
 [购买完成](desktop-purchase-result.png) · [读取失败](scenario-read-failure.png) · [价格变化拒绝](scenario-price-change.png) · [外部消息刷新](scenario-external-message.png)
 
 长页面截图保留页面全高；固定底部导航位于拍摄时的视口底部。弹窗截图使用实际视口范围。
+
+本轮保存 22 张真实截图。完成检查时没有未解决的失败项；修复后的浏览器九组场景、18 项前端测试、2 项后端测试、构建和健康检查均通过。源文件核对见 `materials.json`，空间统计见 `space.json`。
 
 ## 未验证/未实现
 

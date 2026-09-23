@@ -1,0 +1,32 @@
+[
+  {
+    "Name": "HANDOFF_UI.md",
+    "Bytes": 28251,
+    "SHA256": "9D28BD54024D1BFA8E5E91E8C3CE54E7AE3F3C7F12648782B8B2EA14C1C08B66",
+    "ArchiveMatches": true
+  },
+  {
+    "Name": "MATERIALS_RECEIVED.md",
+    "Bytes": 6364,
+    "SHA256": "559A125767E111C742FD3523B9DF8EECE881E0622C2D8AFFAA640D855F60294A",
+    "ArchiveMatches": true
+  },
+  {
+    "Name": "SalesBench.html",
+    "Bytes": 176839,
+    "SHA256": "1B9B19CEB3AE395343BC2FA25254E8C83B8FC87981371E3C77E1EC11B93BEADC",
+    "ArchiveMatches": true
+  },
+  {
+    "Name": "SalesBench_交付说明.md",
+    "Bytes": 4618,
+    "SHA256": "3DE9D3631DB3FD72B5F353FE71CF73D4FD365B5EA4986F197AB5C6251A39ED4E",
+    "ArchiveMatches": true
+  },
+  {
+    "Name": "SalesBench_V1_源码.zip",
+    "Bytes": 509170,
+    "SHA256": "BFFF8223DFB83A9E30DF4BFF47C69521CC719E531BB136319C61857D3D3BBB55",
+    "ArchiveMatches": true
+  }
+]

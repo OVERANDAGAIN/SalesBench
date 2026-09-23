@@ -1,0 +1,41 @@
+{
+  "CheckedAt": "2026-09-23T06:55:19.1992916Z",
+  "Metric": "Logical file lengths; hard links may be counted more than once, a conservative size bound",
+  "Items": [
+    {
+      "Path": "D:\\SalesBench\\frontend\\node_modules",
+      "Bytes": 82137912,
+      "MiB": 78.33
+    },
+    {
+      "Path": "D:\\SalesBench\\backend\\.venv",
+      "Bytes": 25726052,
+      "MiB": 24.53
+    },
+    {
+      "Path": "D:\\DevCache\\SalesBench",
+      "Bytes": 137231690,
+      "MiB": 130.87
+    },
+    {
+      "Path": "D:\\DevTools\\uv",
+      "Bytes": 60668416,
+      "MiB": 57.86
+    },
+    {
+      "Path": "C:\\Users\\25107\\AppData\\Local\\pnpm-cache",
+      "Bytes": 49128941,
+      "MiB": 46.85
+    },
+    {
+      "Path": "C:\\Users\\25107\\AppData\\Local\\pnpm-state",
+      "Bytes": 56,
+      "MiB": 0,
+      "Note": "Creation ownership not separately established; conservatively included"
+    }
+  ],
+  "TotalBytes": 354893067.0,
+  "TotalMiB": 338.45,
+  "LimitGiB": 5,
+  "WithinLimit": true
+}
