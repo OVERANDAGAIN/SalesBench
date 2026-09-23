@@ -9,6 +9,9 @@
 *.toml text eol=lf
 *.py text eol=lf
 *.ps1 text eol=lf
+*.mjs text eol=lf
+*.html text eol=lf
+*.lock text eol=lf
 references/** -text
 *.webp binary
 *.jpg binary

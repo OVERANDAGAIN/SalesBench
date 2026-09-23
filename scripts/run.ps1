@@ -1,6 +1,6 @@
 param(
   [Parameter(Mandatory=$true)]
-  [ValidateSet('install-frontend','install-backend','frontend','backend','typecheck','build','test-frontend','test-backend','preview')]
+  [ValidateSet('install-frontend','install-backend','frontend','backend','typecheck','build','test-frontend','test-backend','test-browser','preview')]
   [string]$Task
 )
 $ErrorActionPreference = 'Stop'
@@ -15,8 +15,11 @@ function Resolve-Tool([string]$name) {
   return $command.Source
 }
 $cache = if ($config -and $config.cache) { $config.cache } elseif ($env:SALESBENCH_CACHE) { $env:SALESBENCH_CACHE } else { Join-Path $root '.local/cache' }
-$env:SALESBENCH_PNPM_STORE = Join-Path $cache 'pnpm-store'
+$env:SALESBENCH_PNPM_STORE = Join-Path $cache 'pnpm-home/store'
 $env:SALESBENCH_PNPM_CACHE = Join-Path $cache 'pnpm-cache'
+$env:pnpm_config_store_dir = $env:SALESBENCH_PNPM_STORE
+$env:pnpm_config_cache_dir = $env:SALESBENCH_PNPM_CACHE
+$env:pnpm_config_state_dir = Join-Path $cache 'pnpm-state'
 $env:UV_CACHE_DIR = Join-Path $cache 'uv'
 $env:UV_PYTHON_DOWNLOADS = 'never'
 $env:PNPM_HOME = Join-Path $cache 'pnpm-home'
@@ -43,6 +46,7 @@ if ($Task -in @('backend','install-backend','test-backend')) {
     'typecheck' { @('run','typecheck') }
     'build' { @('run','build') }
     'test-frontend' { @('run','test') }
+    'test-browser' { @('run','test:browser') }
     'preview' { @('run','preview') }
   }
   Push-Location (Join-Path $root 'frontend')

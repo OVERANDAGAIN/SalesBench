@@ -2,3 +2,8 @@ packages:
   - '.'
 allowBuilds:
   esbuild: true
+strictPeerDependencies: true
+saveExact: true
+engineStrict: true
+pmOnFail: error
+verifyDepsBeforeRun: error

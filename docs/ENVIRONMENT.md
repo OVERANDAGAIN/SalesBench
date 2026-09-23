@@ -38,7 +38,9 @@ pwsh -File .\scripts\run.ps1 install-frontend
 pwsh -File .\scripts\run.ps1 install-backend
 pwsh -File .\scripts\run.ps1 typecheck
 pwsh -File .\scripts\run.ps1 build
+pwsh -File .\scripts\run.ps1 test-frontend
 pwsh -File .\scripts\run.ps1 test-backend
+pwsh -File .\scripts\run.ps1 test-browser
 pwsh -File .\scripts\verify-health.ps1
 ```
 
@@ -52,7 +54,12 @@ pwsh -File .\scripts\run.ps1 backend
 前端 `http://127.0.0.1:5173`；后端 `http://127.0.0.1:8000/health`。
 开发代理仅 `/api/health` → `/health`，无宽泛 CORS。健康结果为 `{"status":"ok","scope":"api_process"}`。
 构建预览：`pwsh -File .\scripts\run.ps1 preview`，地址 `http://127.0.0.1:4173`。
+Vue 买方默认使用显式本地异步演示服务，不需要后端在线；FastAPI 健康检查单独验证，不冒充业务连接。
+设置 `frontend/.env.local` 的 `VITE_BUYER_SERVICE=network` 并重启前端会明确显示真实业务接口未接入，不会回退到演示数据。
 健康验证脚本会检查端口空闲，启动、重启并停止自己的进程；已有端口占用则退出，不终止其他程序。
+浏览器验证使用 playwright-core 1.62.1 和本机 Edge，通过 `.local/runtime.json` 的 `browser` 选择可执行文件；没有下载任何浏览器。
+`test-browser` 自行启动并清理 5173 服务，截图与结果写入 `docs/verification/SB-002B/`；测试夹具 `/tests/browser/harness.html` 只供本地开发测试，不是生产构建入口，也不是参与者调试后台。
+常规运行服务按所属终端 Ctrl+C 停止；不要用端口全局查杀命令终止其他程序。
 
 ## 依赖锁定与版本
 
@@ -60,5 +67,7 @@ pwsh -File .\scripts\run.ps1 backend
 - Python 3.12；FastAPI 0.141.1、Uvicorn 0.53.0；开发测试 pytest 9.1.1、httpx 0.28.1。
 - 首次解析保存 `frontend/pnpm-lock.yaml` 和 `backend/uv.lock`。以后安装默认 `--frozen-lockfile` / `--locked`，uv 禁止自动下载其他 Python。
 - 没有 SQLAlchemy、Alembic、数据库驱动、训练依赖或模型权重。
-- pnpm 11 当前实际 store 位于配置的 `PNPM_HOME/store/v11`，即本机 `D:\DevCache\SalesBench\pnpm-home\store\v11`。uv cache 位于该缓存根下的 `uv`。
+- pnpm 11 store 位于 `D:\DevCache\SalesBench\pnpm-home\store\v11`；启动脚本通过 pnpm 11 支持的 `pnpm_config_*` 进程环境变量明确设置 store/cache/state 到批准缓存根。uv cache 位于该缓存根下的 `uv`。
+- 首次安装时 pnpm 11 不读取旧式 `.npmrc` 的非认证设置，额外写入了 `%LOCALAPPDATA%\pnpm-cache` 元数据缓存约 46.85 MiB。已修正配置方式，后续使用 D 盘缓存；保留该少量残留且计入总空间，不清理可能被其他任务复用的目录。
+- pnpm 配置已迁到 `pnpm-workspace.yaml`；运行脚本前依赖不匹配直接报错，不自动安装或替换固定工具版本。依据：https://pnpm.io/blog/releases/11.0
 - 官方 uv ZIP 保留在缓存根下 `downloads`，安装位置 `D:\DevTools\uv\0.8.22`；未修改全局安装或系统配置。

@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1" /><title>SalesBench automated test fixture</title><link rel="icon" href="data:," /></head>
+<body><div id="app"></div>
+<script type="module">
+import { createApp } from 'vue'
+import App from '/src/App.vue'
+import { createDemoHost } from '/src/demo/service.ts'
+import '/src/styles/prototype.css'
+import '/src/styles/app.css'
+// This file is a dev-only test fixture, not a production entry or participant UI.
+const host = createDemoHost({ latencyMs: 250, replyDelayMs: 900 })
+host.controls.failNext('observe')
+window.testHost = host
+window.testBuyer = host.bindBuyer('buyer_001')
+createApp(App, { service: window.testBuyer, demoMode: true }).mount('#app')
+</script>
+</body>
+</html>

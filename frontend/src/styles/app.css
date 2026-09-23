@@ -1,0 +1,19 @@
+/* Small Vue/async/accessibility adjustments; the archived prototype stylesheet is retained. */
+.content { position: relative; }
+.loading-status { position: fixed; right: 18px; top: 88px; z-index: 20; background: #fff; color: #526aab; border: 1px solid #e4e9f2; padding: 5px 12px; border-radius: 8px; font-size: 12px; box-shadow: 0 2px 8px #2034530a; }
+.load-error { padding: 28px; margin: 20px 0; }
+.load-error p { margin: 12px 0 20px; color: #667287; }
+.message > div { min-width: 0; }
+.message-bubble { overflow-wrap: anywhere; white-space: pre-wrap; }
+.message-meta { flex-wrap: wrap; }
+.stat-unit { font-size: 16px; font-weight: 400; }
+.config-list { margin-top: 20px; }
+dialog { overscroll-behavior: contain; }
+@media (max-width: 700px) {
+  .loading-status { top: 70px; right: 12px; }
+  .contact { min-width: 0; }
+  .contact-copy { white-space: normal; }
+  .detail-top > div { min-width: 0; }
+  .page-head > div { min-width: 0; }
+  .quiet-button { flex-shrink: 0; }
+}
