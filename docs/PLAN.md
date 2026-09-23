@@ -1,14 +1,6 @@
 # 总计划
 
-## 当前任务 SB-PROTOCOL-001
-
-2026-09-23：在已有 H5 与独立 Engine 上设计 Benchmark Round Protocol / Human Scheduler；本轮只做一手调研、源码核对与 docs 文档，不实施 Runner 或业务平台。沿用已核对的 5070 工作副本与 `feat/sb-core-skeleton`；Engine 基线 `d3cbc0352d85b1c6a1ca84472265a95f7efe5383`。保留已有未跟踪 `.idea/`。
-
-交付入口：[一页式决策摘要](PROTOCOL_DECISIONS.md)。规范正文为 [ROUND_PROTOCOL](ROUND_PROTOCOL.md)、[HUMAN_SCHEDULER](HUMAN_SCHEDULER.md)、[RUNNER_DESIGN](RUNNER_DESIGN.md)、[PLATFORM_IMPLICATIONS](PLATFORM_IMPLICATIONS.md)；一手来源与代码推断集中在 [RESEARCH_SCHEDULING](RESEARCH_SCHEDULING.md)。这些是未经正式实验验证的 v0.1 推荐，不把 Development Default 或既有 TEST 经济规则升级为研究定案。
-
-下一步顺序调整为：**A / SB-RUNNER-001 独立 Runner Skeleton → B / Platform Integration V1 → C / Whole-System Skeleton V1**。A 的直接实施文本见 [Prompt](prompts/SB-RUNNER-001.md)；本轮生成 Prompt 后停止，不执行它。最终范围和验证见 [本任务交接](handoffs/SB-PROTOCOL-001.md)。以下 SB-CORE-001 与 SB-002B 保留为历史；旧文中的“下一步直接接数据库”已被本节替代。
-
-## SB-CORE-001（已完成）
+## 当前任务 SB-CORE-001
 
 2026-09-23 用户授权先建设 Python Experiment Engine Skeleton，再考虑平台持久化接入。执行端 5070，分支 `feat/sb-core-skeleton`，从验收基线 `2ab44d79e5d28d5c0c17b17e3cdb2a5768579408` 创建；不修改或推送 main。
 
