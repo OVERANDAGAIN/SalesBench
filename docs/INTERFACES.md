@@ -1,5 +1,7 @@
 # 接口与职责 v0.1 草案
 
+SB-PROTOCOL-001 补充：下文是既有 Vue 演示接口的历史草案，不是已接通的网络服务。新的 Round/Phase/Cycle、异步 buffered receipt、Ready 与持久化需求见 [PLATFORM_IMPLICATIONS](PLATFORM_IMPLICATIONS.md)；调度由 [Runner](RUNNER_DESIGN.md) 负责，Engine 保持经济合法性与状态转移边界。这里只增加文档导航，不改变 TypeScript/HTTP 契约。
+
 SB-CORE-001 更新：下文保留 SB-002B 的 Vue 演示契约作为对照，不自动升级为正式协议。独立 Python Engine 骨架已建设，领域拆分、step、同步 Result、Policy 与平台适配差异见 [ENGINE.md](ENGINE.md)。后续业务 API 接入时重新确认 DTO、幂等、通知和持久化提交边界。
 
 状态：**DRAFT / 尚未与 Python 主体确认**。Python 实验主体、Buyer/Seller 策略、消费者模型未提供。

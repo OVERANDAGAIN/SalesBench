@@ -2,6 +2,8 @@
 
 SB-CORE-001 / 2026-09-23。内核骨架已实现；经济行为仍是明确命名的 TEST 规则，不是正式研究协议。
 
+SB-PROTOCOL-001 补充（仅设计，未改本文件所述实现）：上层调度建议见 [ROUND_PROTOCOL](ROUND_PROTOCOL.md) 和 [RUNNER_DESIGN](RUNNER_DESIGN.md)。Runner 将负责 round/phase/cycle、buffered resolution 和榜单冻结；本文以下内容继续描述当前 Engine。下一实施任务先做 Runner Skeleton，平台持久化接入后置。
+
 ## 位置与职责
 
 独立工程位于 `engine/`，Python 包为 `engine/src/salesbench_engine/`。独立 pyproject、uv.lock 和 `.venv`；零第三方运行时依赖，测试使用标准库 unittest，固定构建后端为 uv_build 0.8.22。没有搬动 frontend/backend，也没有把 Engine 装进既有 backend 环境。
