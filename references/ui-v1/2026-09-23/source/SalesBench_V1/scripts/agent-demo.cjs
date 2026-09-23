@@ -1,0 +1,10 @@
+const fs=require('node:fs');
+const {createSalesBench}=require('../src/core.js');
+const market=createSalesBench({clock:()=> '2026-09-22T10:30:00.000Z'});
+const human=market.bindBuyer('buyer_001');
+const agent=market.bindBuyer('buyer_001');
+const action={id:'agent-demo-purchase-001',type:'purchase',payload:{productId:'p1',quantity:1,expectedUnitPriceCents:8900}};
+const trace={observationBefore:agent.observe({view:'product',productId:'p1'}),action,receipt:agent.execute(action),humanObservationAfter:human.observe({view:'me'})};
+if(trace.receipt.result.balanceCents!==41100||trace.humanObservationAfter.orders.length!==1)throw new Error('Shared state verification failed');
+if(process.argv[2])fs.writeFileSync(process.argv[2],JSON.stringify(trace,null,2));
+else console.log(JSON.stringify(trace,null,2));

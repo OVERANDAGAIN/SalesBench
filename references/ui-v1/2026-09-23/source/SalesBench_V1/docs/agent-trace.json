@@ -1,0 +1,217 @@
+{
+  "observationBefore": {
+    "ok": true,
+    "schemaVersion": "1.0",
+    "revision": 0,
+    "view": "product",
+    "actor": {
+      "id": "buyer_001",
+      "name": "体验买家",
+      "balanceCents": 50000
+    },
+    "navigation": {
+      "page": "leaderboard",
+      "merchantId": "s1",
+      "filterMerchantId": null,
+      "focusedProductId": null
+    },
+    "demoConfig": {
+      "mode": "演示配置 · 非正式实验算法",
+      "ranking": "按模拟累计成交额降序；同额按商家编号排序。含预置成交额，购买后更新。",
+      "recommendation": "固定商品顺序；不使用画像、个性化或学习算法。",
+      "publicFields": "商家名称、销售描述、商品信息、剩余库存、累计成交额与成交件数、讨论区公开消息。",
+      "privateFields": "仅本人余额、购买历史、私聊和浏览状态；其他买家的私聊与余额不可观察。",
+      "replies": "按问题关键词返回预设文本；不调用模型，不模拟真实消费者心理。",
+      "session": "单浏览器会话内共享；刷新或重新打开将重置。所有金额为模拟人民币。",
+      "purchase": "一键确认即完成模拟购买；扣减余额和库存，不收款、不发货。"
+    },
+    "merchants": [
+      {
+        "id": "s1",
+        "name": "松间生活",
+        "initial": "松",
+        "color": "green",
+        "tag": "日常好物",
+        "description": "把日常过得轻一点。一只随行杯，一只帆布袋，陪你从早八出发。",
+        "pitch": "今天聊聊随行杯：380mL 容量，陶瓷内胆，适合办公室和短途出行。想了解清洗方式、材质或尺寸，直接在下面问我。",
+        "featuredProductId": "p1"
+      },
+      {
+        "id": "s2",
+        "name": "声屿数码",
+        "initial": "声",
+        "color": "blue",
+        "tag": "专注与音乐",
+        "description": "给通勤留一点自己的声音。轻巧、舒适，先聊清楚再选择。",
+        "pitch": "头戴式无线耳机，适合通勤听歌与桌面办公。本场展示基础款和长续航款，欢迎公开提问，也可以私聊比较。",
+        "featuredProductId": "p3"
+      },
+      {
+        "id": "s3",
+        "name": "轻行商店",
+        "initial": "轻",
+        "color": "orange",
+        "tag": "轻装出门",
+        "description": "装下日常，也留一点空余。简单耐用的通勤包，按需要挑选。",
+        "pitch": "今天主推日常帆布托特包。能放下 13 英寸电脑与日常小物；如果更在意容量，可以看看加大款。",
+        "featuredProductId": "p5"
+      }
+    ],
+    "permissions": {
+      "publicRooms": [
+        "s1",
+        "s2",
+        "s3"
+      ],
+      "privateConversations": "self_only",
+      "orders": "self_only",
+      "merchantInternal": false,
+      "otherBuyerProfiles": false
+    },
+    "product": {
+      "id": "p1",
+      "merchantId": "s1",
+      "name": "陶瓷随行杯",
+      "variant": "奶油白 · 380mL",
+      "category": "生活",
+      "priceCents": 8900,
+      "stock": 8,
+      "image": "assets/cup.webp",
+      "specs": [
+        "陶瓷内胆",
+        "约 320g",
+        "可拆卸杯盖"
+      ],
+      "description": "一只适合放在桌边的随行杯。杯口圆润，杯盖可拆洗；非保温杯，不建议倒置携带。"
+    }
+  },
+  "action": {
+    "id": "agent-demo-purchase-001",
+    "type": "purchase",
+    "payload": {
+      "productId": "p1",
+      "quantity": 1,
+      "expectedUnitPriceCents": 8900
+    }
+  },
+  "receipt": {
+    "ok": true,
+    "schemaVersion": "1.0",
+    "actionId": "agent-demo-purchase-001",
+    "actorId": "buyer_001",
+    "type": "purchase",
+    "revision": 1,
+    "replayed": false,
+    "result": {
+      "order": {
+        "id": "SB-00011",
+        "productId": "p1",
+        "productName": "陶瓷随行杯",
+        "variant": "奶油白 · 380mL",
+        "merchantId": "s1",
+        "merchantName": "松间生活",
+        "unitPriceCents": 8900,
+        "quantity": 1,
+        "totalCents": 8900,
+        "time": "2026-09-22T10:30:00.000Z",
+        "status": "模拟购买完成"
+      },
+      "balanceCents": 41100,
+      "remainingStock": 7
+    }
+  },
+  "humanObservationAfter": {
+    "ok": true,
+    "schemaVersion": "1.0",
+    "revision": 1,
+    "view": "me",
+    "actor": {
+      "id": "buyer_001",
+      "name": "体验买家",
+      "balanceCents": 41100
+    },
+    "navigation": {
+      "page": "leaderboard",
+      "merchantId": "s1",
+      "filterMerchantId": null,
+      "focusedProductId": null
+    },
+    "demoConfig": {
+      "mode": "演示配置 · 非正式实验算法",
+      "ranking": "按模拟累计成交额降序；同额按商家编号排序。含预置成交额，购买后更新。",
+      "recommendation": "固定商品顺序；不使用画像、个性化或学习算法。",
+      "publicFields": "商家名称、销售描述、商品信息、剩余库存、累计成交额与成交件数、讨论区公开消息。",
+      "privateFields": "仅本人余额、购买历史、私聊和浏览状态；其他买家的私聊与余额不可观察。",
+      "replies": "按问题关键词返回预设文本；不调用模型，不模拟真实消费者心理。",
+      "session": "单浏览器会话内共享；刷新或重新打开将重置。所有金额为模拟人民币。",
+      "purchase": "一键确认即完成模拟购买；扣减余额和库存，不收款、不发货。"
+    },
+    "merchants": [
+      {
+        "id": "s1",
+        "name": "松间生活",
+        "initial": "松",
+        "color": "green",
+        "tag": "日常好物",
+        "description": "把日常过得轻一点。一只随行杯，一只帆布袋，陪你从早八出发。",
+        "pitch": "今天聊聊随行杯：380mL 容量，陶瓷内胆，适合办公室和短途出行。想了解清洗方式、材质或尺寸，直接在下面问我。",
+        "featuredProductId": "p1"
+      },
+      {
+        "id": "s2",
+        "name": "声屿数码",
+        "initial": "声",
+        "color": "blue",
+        "tag": "专注与音乐",
+        "description": "给通勤留一点自己的声音。轻巧、舒适，先聊清楚再选择。",
+        "pitch": "头戴式无线耳机，适合通勤听歌与桌面办公。本场展示基础款和长续航款，欢迎公开提问，也可以私聊比较。",
+        "featuredProductId": "p3"
+      },
+      {
+        "id": "s3",
+        "name": "轻行商店",
+        "initial": "轻",
+        "color": "orange",
+        "tag": "轻装出门",
+        "description": "装下日常，也留一点空余。简单耐用的通勤包，按需要挑选。",
+        "pitch": "今天主推日常帆布托特包。能放下 13 英寸电脑与日常小物；如果更在意容量，可以看看加大款。",
+        "featuredProductId": "p5"
+      }
+    ],
+    "permissions": {
+      "publicRooms": [
+        "s1",
+        "s2",
+        "s3"
+      ],
+      "privateConversations": "self_only",
+      "orders": "self_only",
+      "merchantInternal": false,
+      "otherBuyerProfiles": false
+    },
+    "account": {
+      "initialBalanceCents": 50000,
+      "spentCents": 8900
+    },
+    "orders": [
+      {
+        "id": "SB-00011",
+        "productId": "p1",
+        "productName": "陶瓷随行杯",
+        "variant": "奶油白 · 380mL",
+        "merchantId": "s1",
+        "merchantName": "松间生活",
+        "unitPriceCents": 8900,
+        "quantity": 1,
+        "totalCents": 8900,
+        "time": "2026-09-22T10:30:00.000Z",
+        "status": "模拟购买完成"
+      }
+    ],
+    "lastDecision": {
+      "type": "purchase",
+      "productId": "p1",
+      "time": "2026-09-22T10:30:00.000Z"
+    }
+  }
+}

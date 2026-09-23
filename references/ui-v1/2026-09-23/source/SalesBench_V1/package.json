@@ -1,0 +1,8 @@
+{
+  "name": "salesbench-buyer-prototype",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SalesBench 买方端独立演示原型，零第三方依赖",
+  "scripts": { "dev": "node scripts/serve.mjs", "build": "node scripts/build.mjs", "test": "node --test tests/core.test.cjs" },
+  "engines": { "node": ">=18" }
+}

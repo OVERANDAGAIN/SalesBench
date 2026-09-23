@@ -1,0 +1,1 @@
+PASS: Browser app adapter executed in Node VM with minimal DOM stubs. All five page templates render; Agent purchase updates visible balance and modal; view_product revision increments exactly once. This is not browser rendering or a click test.
