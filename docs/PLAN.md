@@ -1,5 +1,13 @@
 # 总计划
 
+## 当前任务 SB-CORE-001
+
+2026-09-23 用户授权先建设 Python Experiment Engine Skeleton，再考虑平台持久化接入。执行端 5070，分支 `feat/sb-core-skeleton`，从验收基线 `2ab44d79e5d28d5c0c17b17e3cdb2a5768579408` 创建；不修改或推送 main。
+
+目标：独立 `engine/` 包、明确领域/观察/动作边界、采购到销售的完整内存流程、step、可替换策略、确定性场景和测试。A 基础已实现；B 状态转移与 C 场景/交付检查进行中。进度见 [SB-CORE-001](handoffs/SB-CORE-001.md)。
+
+本任务不建设业务 API、数据库、Vue 网络适配器、LLM 或桌面客户端。下文 SB-002B 与原后续计划保留为历史；当前授权顺序以本节为准。
+
 ## 本轮边界
 
 唯一工程 `D:\SalesBench`；远端 `https://github.com/OVERANDAGAIN/SalesBench.git`。
