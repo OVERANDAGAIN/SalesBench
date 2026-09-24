@@ -1,5 +1,7 @@
 # 接口与职责 v0.1 草案
 
+SB-RUNNER-001 更新：新增 [RUNNER.md](RUNNER.md)，明确 benchmark 的 Round/Tick/Wave、冻结观察、统一发布、offer/content revision、进程内幂等与审计重放。下文继续是历史 Vue 演示契约，不自动转成 Runner 协议。平台后续必须区分 publication version / offer_revision / content_revision / 网络通知 revision；购买要映射 listing_id、expected price 和 expected offer revision。Runner 的 Wave 调度不能被 HTTP 到达顺序替代，HumanDriver 尚未实现。
+
 SB-CORE-001 更新：下文保留 SB-002B 的 Vue 演示契约作为对照，不自动升级为正式协议。独立 Python Engine 骨架已建设，领域拆分、step、同步 Result、Policy 与平台适配差异见 [ENGINE.md](ENGINE.md)。后续业务 API 接入时重新确认 DTO、幂等、通知和持久化提交边界。
 
 状态：**DRAFT / 尚未与 Python 主体确认**。Python 实验主体、Buyer/Seller 策略、消费者模型未提供。

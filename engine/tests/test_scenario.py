@@ -42,7 +42,7 @@ class ScenarioTests(unittest.TestCase):
         import salesbench_engine
 
         root = Path(salesbench_engine.__file__).parent
-        for path in root.glob("*.py"):
+        for path in root.rglob("*.py"):
             for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
                 if isinstance(node, ast.Import):
                     names = [alias.name.split(".")[0] for alias in node.names]

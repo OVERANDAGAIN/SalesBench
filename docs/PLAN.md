@@ -1,6 +1,14 @@
 # 总计划
 
-## 当前任务 SB-CORE-001
+## 当前任务 SB-RUNNER-001
+
+2026-09-24 用户确认 LLM-first 的 Market Round → Market Tick → configurable Wave，并授权实施 Market Wave Runner。执行端 5070；沿用授权分支 `feat/sb-core-skeleton`，开工 HEAD `c22978001cabb8613919b1daf2ba3eec01ed5eff` 与远端一致。该提交回退了此前未实施的协议文档，文件树与已交付 Engine 提交 `d3cbc0352d85b1c6a1ca84472265a95f7efe5383` 一致。main 保持 `2ab44d79e5d28d5c0c17b17e3cdb2a5768579408`。
+
+目标已完成：独立 Runner、Round 采购、V1 Seller/Buyer Wave、冻结观察与统一发布、并发 Driver、有限批次、报价版本、确定性购买裁决、进程内幂等、journal 与 recorded trace replay。61 项 Python 测试、CLI 重放、wheel/sdist 和独立 wheel 安装验证通过。实现和验证以 [RUNNER.md](RUNNER.md) / [SB-RUNNER-001](handoffs/SB-RUNNER-001.md) 为准。`.idea/` 为开工即存在的用户未跟踪文件，原样保留。
+
+完成后停止；不进入数据库、FastAPI 业务 API、Vue 网络连接、HumanDriver 或正式研究策略。LLMDriver 接口通过 fake adapter 验证，不声称完成真实模型接入。批次失败传播保留为 protocol debt，不能自行升级为正式研究机制。
+
+## SB-CORE-001（历史）
 
 2026-09-23 用户授权先建设 Python Experiment Engine Skeleton，再考虑平台持久化接入。执行端 5070，分支 `feat/sb-core-skeleton`，从验收基线 `2ab44d79e5d28d5c0c17b17e3cdb2a5768579408` 创建；不修改或推送 main。
 

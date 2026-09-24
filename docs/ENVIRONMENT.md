@@ -2,6 +2,8 @@
 
 ## 独立 Engine（SB-CORE-001 / 5070）
 
+SB-RUNNER-001 更新：`salesbench-engine` 0.2.0，仍零第三方运行时依赖。新增 Runner 不安装数据库、模型 SDK/权重、浏览器或其他大型环境。仅因本地包版本提升更新 `engine/uv.lock`，不改变 Python/构建依赖要求。
+
 新增 `engine/` 独立工程，不修改 frontend/backend 的锁文件或运行配置。复用本机 Python 3.12.14、uv 0.8.22 和 `.local/runtime.json`；环境位于 `engine/.venv`，缓存沿用配置中的缓存根。零运行时第三方依赖，测试用 unittest。构建后端固定 `uv_build==0.8.22`，当前 uv 直接使用内置后端，无需下载新工具。
 
 在根目录运行：
@@ -10,12 +12,14 @@
 pwsh -File scripts/engine.ps1 install
 pwsh -File scripts/engine.ps1 test
 pwsh -File scripts/engine.ps1 demo -Seed 7
+pwsh -File scripts/engine.ps1 runner-demo -Seed 7 -ResolutionSeed 7 -JournalPath .local/wave-trace.json
+pwsh -File scripts/engine.ps1 replay -JournalPath .local/wave-trace.json
 pwsh -File scripts/engine.ps1 build
 ```
 
 安装和运行使用 `--locked`，禁止自动下载 Python；`build` 生成被忽略的 `engine/dist/` wheel/sdist。首次新增的 Engine 锁文件已生成，后续不重解析来迁就机器环境。
 
-无需 uv 的运行方式（先完成安装）：`engine\.venv\Scripts\python.exe -m salesbench_engine.scenario --seed 7`。没有监听端口、服务或外部模型调用。测试日志可保存在各机忽略的 `.local` 中；交付结果见 `docs/handoffs/SB-CORE-001.md`。
+无需 uv 的运行方式（先完成安装）：`engine\.venv\Scripts\python.exe -m salesbench_engine.scenario --seed 7`；Runner 使用 `-m salesbench_engine.runner.demo`，支持 `--seed`、`--resolution-seed`、`--journal PATH`、`--replay PATH`。先创建 journal 的父目录；PowerShell 包装脚本的 `-JournalPath` 相对调用时目录解析。没有监听端口、服务或外部模型调用。测试与审计日志保存在各机忽略的 `.local` 中；本次交付见 `docs/handoffs/SB-RUNNER-001.md`，历史见 SB-CORE-001。
 
 5070 使用 Git 2.51.0.windows.1 / PowerShell 7.6.5 / Node 24.19.0 / pnpm 11.19.0，前后端锁定环境已独立恢复。以下环境基线和空间记录为 SB-002B 在 3050 的历史，不要求复制账号路径或依赖。
 

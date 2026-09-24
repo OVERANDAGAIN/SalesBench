@@ -1,7 +1,7 @@
 [project]
 name = "salesbench-engine"
-version = "0.1.0"
-description = "Standalone, deterministic SalesBench experiment skeleton"
+version = "0.2.0"
+description = "Standalone SalesBench Engine and deterministic Market Wave Runner"
 requires-python = ">=3.12,<3.13"
 dependencies = []
 

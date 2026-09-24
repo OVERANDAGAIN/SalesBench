@@ -2,8 +2,8 @@
 
 SalesBench 总工程：买方 Web/H5 前端、平台后端与独立 Python 实验内核按职责组织。
 
-当前任务：SB-CORE-001，机器 5070，分支 `feat/sb-core-skeleton`。
-独立 `engine/` 已实现采购、库存、上架/调价、公开/私聊、购买、资金/订单和逻辑 step 的确定性内存骨架。消费者与 Seller 正式策略尚未实现，当前经济行为是 TEST 规则。
+当前任务：SB-RUNNER-001，机器 5070，沿用授权分支 `feat/sb-core-skeleton`。
+独立 `engine/` 已实现采购、库存、上架/调价、公开/私聊、购买、资金/订单，以及 Market Wave Runner。每 Round 先采购，再运行固定数量 Tick；V1 每 Tick 为 Seller Strategy → Buyer Action，同 Wave 冻结观察、并发收集、统一执行/发布，正常 Round 结束才推进一次 Engine step。消费者与 Seller 正式策略尚未实现，当前经济行为是 TEST 规则。
 
 SB-002B 基础工程和 Vue 买方端已经用户验收；接口 v0.1 仍是待对齐草案。
 本地演示刷新即重置；消息先发送成功，稍后出现预设回复；购买与余额、库存、订单和演示榜单共用同一服务。
@@ -15,9 +15,13 @@ Vue 仍运行自己的本地演示，FastAPI 仍只有 `/health`；尚未调用 
 pwsh -File .\scripts\engine.ps1 install
 pwsh -File .\scripts\engine.ps1 test
 pwsh -File .\scripts\engine.ps1 demo -Seed 7
+pwsh -File .\scripts\engine.ps1 runner-demo -Seed 7 -ResolutionSeed 7 -JournalPath .local/wave-trace.json
+pwsh -File .\scripts\engine.ps1 replay -JournalPath .local/wave-trace.json
 ```
 
-使用本机 `.local/runtime.json` 中的 Python 3.12/uv，无需启动任何服务。设计、TEST 规则、完整命令及未来平台接入边界见 [ENGINE.md](docs/ENGINE.md)，本任务交接见 [SB-CORE-001](docs/handoffs/SB-CORE-001.md)。
+使用本机 `.local/runtime.json` 中的 Python 3.12/uv，无需启动任何服务。Runner CLI 使用 ScriptedDriver；LLMDriver 提供可注入异步 ModelAdapter 的请求/预算/结果边界，测试使用 fake adapter，没有真实模型调用。Journal 含私有数据，仅供宿主审计。
+
+内核见 [ENGINE.md](docs/ENGINE.md)，调度、版本、故障和重放见 [RUNNER.md](docs/RUNNER.md)，本任务交接见 [SB-RUNNER-001](docs/handoffs/SB-RUNNER-001.md)。
 
 ## 本机快速开始
 
@@ -34,7 +38,8 @@ API 单独启动：`pwsh -File .\scripts\run.ps1 backend`；`GET http://127.0.0.
 - [共同计划](docs/PLAN.md)
 - [环境与命令](docs/ENVIRONMENT.md)
 - [接口与职责 v0.1 草案](docs/INTERFACES.md)
-- [Engine 任务进度与接力](docs/handoffs/SB-CORE-001.md)
+- [Runner 任务进度与接力](docs/handoffs/SB-RUNNER-001.md)
+- [历史 Engine 骨架接力](docs/handoffs/SB-CORE-001.md)
 - [历史 Vue 验证与截图](docs/verification/SB-002B/README.md)
 - [SB-002B 历史接力](docs/handoffs/SB-002B.md)
 - [开发约定](AGENTS.md)

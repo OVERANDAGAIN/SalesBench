@@ -89,7 +89,7 @@ class TransitionTests(unittest.TestCase):
 
     def test_buyer_observation_excludes_other_orders_inventory_costs_and_money(self):
         engine = stocked_engine()
-        engine.execute("buyer", Purchase("cup-listing", 1, 300))
+        engine.execute("buyer", Purchase("cup-listing", 1, 300, 1))
         owner = engine.observe("buyer", View.SELF)
         other = engine.observe("other-buyer", View.SELF)
         self.assertEqual(len(owner.orders), 1)
@@ -148,7 +148,7 @@ class TransitionTests(unittest.TestCase):
 
     def test_purchase_cash_stock_order_and_event_are_consistent(self):
         engine = stocked_engine()
-        result = engine.execute("buyer", Purchase("cup-listing", 2, 300))
+        result = engine.execute("buyer", Purchase("cup-listing", 2, 300, 1))
         self.assertTrue(result.ok)
         buyer = engine.observe("buyer", View.SELF)
         seller = engine.observe("seller", View.SELF)
@@ -164,34 +164,34 @@ class TransitionTests(unittest.TestCase):
         self.assertEqual(engine.observe("buyer", View.SELF).orders[0], order)
 
     def test_purchase_insufficient_buyer_money_is_atomic(self):
-        self.assert_rejected_without_change(stocked_engine(price=1100), "buyer", Purchase("cup-listing", 1, 1100), "INSUFFICIENT_FUNDS")
+        self.assert_rejected_without_change(stocked_engine(price=1100), "buyer", Purchase("cup-listing", 1, 1100, 1), "INSUFFICIENT_FUNDS")
 
     def test_purchase_insufficient_seller_stock_is_atomic(self):
-        self.assert_rejected_without_change(stocked_engine(), "buyer", Purchase("cup-listing", 6, 300), "OUT_OF_STOCK")
+        self.assert_rejected_without_change(stocked_engine(), "buyer", Purchase("cup-listing", 6, 300, 1), "OUT_OF_STOCK")
 
     def test_purchase_stale_expected_price_is_atomic(self):
         engine = stocked_engine()
         observed = engine.observe("buyer", View.PRODUCT, listing_id="cup-listing").listings[0]
         engine.execute("seller", UpdateListing("cup-listing", unit_price_cents=350))
-        self.assert_rejected_without_change(engine, "buyer", Purchase("cup-listing", 1, observed.listing.unit_price_cents), "PRICE_CHANGED")
+        self.assert_rejected_without_change(engine, "buyer", Purchase("cup-listing", 1, observed.listing.unit_price_cents, 1), "PRICE_CHANGED")
 
     def test_purchase_rejects_bad_actor_listing_status_quantity_and_price(self):
         engine = stocked_engine()
         for actor, action, code in (
-            ("missing", Purchase("cup-listing", 1, 300), "ACTOR_NOT_FOUND"),
-            ("seller", Purchase("cup-listing", 1, 300), "FORBIDDEN"),
-            ("buyer", Purchase("missing", 1, 300), "LISTING_NOT_FOUND"),
-            ("buyer", Purchase([], 1, 300), "INVALID_ID"),
-            ("buyer", Purchase("cup-listing", 1, True), "INVALID_PRICE"),
+            ("missing", Purchase("cup-listing", 1, 300, 1), "ACTOR_NOT_FOUND"),
+            ("seller", Purchase("cup-listing", 1, 300, 1), "FORBIDDEN"),
+            ("buyer", Purchase("missing", 1, 300, 1), "LISTING_NOT_FOUND"),
+            ("buyer", Purchase([], 1, 300, 1), "INVALID_ID"),
+            ("buyer", Purchase("cup-listing", 1, True, 1), "INVALID_PRICE"),
             ("buyer", {"type": "purchase", "actor_id": "other-buyer"}, "INVALID_ACTION"),
         ):
             with self.subTest(action=action):
                 self.assert_rejected_without_change(engine, actor, action, code)
         for quantity in (0, -1, True, 1.5, "1"):
             with self.subTest(quantity=quantity):
-                self.assert_rejected_without_change(engine, "buyer", Purchase("cup-listing", quantity, 300), "INVALID_QUANTITY")
+                self.assert_rejected_without_change(engine, "buyer", Purchase("cup-listing", quantity, 300, 1), "INVALID_QUANTITY")
         engine.execute("seller", UpdateListing("cup-listing", active=False))
-        self.assert_rejected_without_change(engine, "buyer", Purchase("cup-listing", 1, 300), "LISTING_INACTIVE")
+        self.assert_rejected_without_change(engine, "buyer", Purchase("cup-listing", 1, 300, 2), "LISTING_INACTIVE")
         self.assertEqual(engine.observe("buyer").listings, ())
         with self.assertRaises(ObservationError):
             engine.observe("buyer", View.PRODUCT, listing_id="cup-listing")
@@ -204,14 +204,14 @@ class TransitionTests(unittest.TestCase):
         before = engine.snapshot()
         with patch.object(engine, "_emit", side_effect=RuntimeError("Injected failure")):
             with self.assertRaisesRegex(RuntimeError, "Injected failure"):
-                engine.execute("buyer", Purchase("cup-listing", 1, 300))
+                engine.execute("buyer", Purchase("cup-listing", 1, 300, 1))
         self.assertEqual(engine.snapshot(), before)
-        result = engine.execute("buyer", Purchase("cup-listing", 1, 300))
+        result = engine.execute("buyer", Purchase("cup-listing", 1, 300, 1))
         self.assertEqual(result.entity_id, "order-000001")
 
     def test_advance_preserves_market_and_assigns_steps_without_wall_clock(self):
         engine = stocked_engine()
-        engine.execute("buyer", Purchase("cup-listing", 1, 300))
+        engine.execute("buyer", Purchase("cup-listing", 1, 300, 1))
         before = engine.observe("buyer", View.SELF)
         result = engine.advance(2)
         after = engine.observe("buyer", View.SELF)
@@ -221,7 +221,7 @@ class TransitionTests(unittest.TestCase):
         self.assertEqual(after.orders, before.orders)
         engine.execute("buyer", SendPrivate("seller", "Next round"))
         self.assertEqual(engine.observe("buyer", View.PRIVATE).messages[0].step, 2)
-        self.assertTrue(engine.execute("buyer", Purchase("cup-listing", 1, 300)).ok)
+        self.assertTrue(engine.execute("buyer", Purchase("cup-listing", 1, 300, 1)).ok)
 
     def test_invalid_advance_cannot_change_state(self):
         engine = stocked_engine()
@@ -247,14 +247,14 @@ class TransitionTests(unittest.TestCase):
     def test_multiple_listings_share_owned_stock_without_double_counting(self):
         engine = stocked_engine(quantity=1)
         self.assertTrue(engine.execute("seller", CreateListing("second-listing", "cup", 250, "Same stock")).ok)
-        self.assertTrue(engine.execute("buyer", Purchase("cup-listing", 1, 300)).ok)
-        self.assert_rejected_without_change(engine, "other-buyer", Purchase("second-listing", 1, 250), "OUT_OF_STOCK")
+        self.assertTrue(engine.execute("buyer", Purchase("cup-listing", 1, 300, 1)).ok)
+        self.assert_rejected_without_change(engine, "other-buyer", Purchase("second-listing", 1, 250, 1), "OUT_OF_STOCK")
         self.assertEqual([v.available_quantity for v in engine.observe("buyer").listings], [0, 0])
 
     def test_competing_buyers_cannot_buy_the_same_last_unit(self):
         engine = stocked_engine(quantity=1)
         with ThreadPoolExecutor(max_workers=2) as executor:
-            results = list(executor.map(lambda actor: engine.execute(actor, Purchase("cup-listing", 1, 300)), ("buyer", "other-buyer")))
+            results = list(executor.map(lambda actor: engine.execute(actor, Purchase("cup-listing", 1, 300, 1)), ("buyer", "other-buyer")))
         self.assertEqual(sum(r.ok for r in results), 1)
         self.assertEqual([r.code for r in results if not r.ok], ["OUT_OF_STOCK"])
         state = engine.snapshot()
@@ -266,7 +266,7 @@ class TransitionTests(unittest.TestCase):
         first = stocked_engine()
         second = Engine(make_setup())
         before = second.snapshot()
-        first.execute("buyer", Purchase("cup-listing", 1, 300))
+        first.execute("buyer", Purchase("cup-listing", 1, 300, 1))
         first.advance()
         self.assertEqual(second.snapshot(), before)
 

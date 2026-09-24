@@ -43,6 +43,7 @@ class Purchase:
     listing_id: str
     quantity: int
     expected_unit_price_cents: int
+    expected_offer_revision: int
 
 
 @dataclass(frozen=True)

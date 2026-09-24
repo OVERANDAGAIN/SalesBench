@@ -7,7 +7,7 @@
 
 ## 单执行端与 Git
 
-- 一个 GitHub 总仓库，每台机器独立克隆；当前任务 SB-CORE-001 执行端为 5070，任务分支 `feat/sb-core-skeleton`。历史 SB-002B 执行端为 3050。
+- 一个 GitHub 总仓库，每台机器独立克隆；当前任务 SB-RUNNER-001 执行端为 5070，沿用已授权任务分支 `feat/sb-core-skeleton`。历史 SB-CORE-001 执行端为 5070，SB-002B 为 3050。
 - 同一任务同一时刻只有一个执行端。换机前停止执行、保存检查点，记录验证结果和可接手提交，推送任务分支后再交接。
 - 接手前核对远端、分支、提交、工作区和 `docs/handoffs/<任务编号>.md`。未推送内容不能称为跨机同步。
 - 发现陌生修改、历史分叉或其他任务提交时保留现场，不自动覆盖、合并、变基、reset 或 clean。
@@ -22,6 +22,8 @@
 - `references/`：原始材料快照，保持字节不变，不运行包内脚本，不把其根配置复制到总工程根部。
 - `engine/`：独立 Python 实验内核，运行时不依赖 FastAPI、数据库或 UI。SB-CORE-001 获准首次建设骨架；正式消费者模型和智能策略仍未提供，不把 TEST 规则当作研究定案。
 - Policy 只根据授权观察提出结构化动作，Engine 裁决并改变状态；平台通过 application/adapter 层调用，不把研究逻辑写进路由。
+- `engine/src/salesbench_engine/runner/`：LLM-first 的独立 Round/Tick/Wave 调度；同 Wave 冻结授权观察，全部 Driver 收集后执行，正常完成才发布。报价版本及经济规则仍归 Engine；购买排序不可依赖模型耗时、HTTP 时间、action ID 或 Python hash。市场/裁决配置与模型运行配置分开。
+- 当前 V1 批次业务失败保留成功前缀、跳过剩余动作；必须记录 skipped 原因。失败传播语义后续需正式确认。Runner journal 含私有状态与模型原文，只供可信宿主审计，默认写入忽略的 `.local/`，不可作为参与者观察或提交到 Git。
 - 参与者客户端长期采用 Web/H5；不建设 Electron、Tauri、Windows EXE、Python GUI 或其他桌面原生客户端。未来 Seller 人工界面也属于 Web/H5，Engine 本身无 UI。
 - 网页账户/实验参与者与消费者模拟器分别建模。未确认的接口必须标为草案。
 - 保留五页顺序、中文布局和购买/不购买路径；不新增 Seller 后台或 Agent 管理 UI。

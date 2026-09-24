@@ -197,10 +197,11 @@ class Engine:
             return Result(True, "OK", draft.step, entity_id, tuple(draft.events[first_event:]))
 
     def advance(self, steps: int = 1) -> Result:
-        """Trusted environment clock. Host may run due policies after each tick.
+        """Trusted logical clock. A step has no intrinsic real-time duration.
 
         No participant action, sleep, background task or implicit policy call.
-        advance(n) emits n ticks; use n calls to advance(1) to interleave policies.
+        advance(n) emits n step events. Market Wave Runner advances once per
+        completed Round; its Market Ticks/Waves do not call this method.
         """
         if not _integer(steps, 1):
             raise ValueError("steps must be a positive integer")
@@ -298,6 +299,10 @@ class Engine:
             if action.active is not None:
                 _require(type(action.active) is bool, "INVALID_STATUS")
                 changes["active"] = action.active
+            if any(key in changes and changes[key] != getattr(listing, key) for key in ("unit_price_cents", "active")):
+                changes["offer_revision"] = listing.offer_revision + 1
+            if "description" in changes and changes["description"] != listing.description:
+                changes["content_revision"] = listing.content_revision + 1
             state.listings[listing.id] = replace(listing, **changes)
             self._emit(state, "listing_updated", actor_id, listing.id)
             return listing.id
@@ -306,10 +311,12 @@ class Engine:
             _require(_identifier(action.listing_id), "INVALID_ID")
             _require(_integer(action.quantity, 1), "INVALID_QUANTITY")
             _require(_integer(action.expected_unit_price_cents), "INVALID_PRICE")
+            _require(_integer(action.expected_offer_revision, 1), "INVALID_REVISION")
             listing = state.listings.get(action.listing_id)
             _require(listing is not None, "LISTING_NOT_FOUND")
-            _require(listing.active, "LISTING_INACTIVE")
             _require(listing.unit_price_cents == action.expected_unit_price_cents, "PRICE_CHANGED")
+            _require(listing.offer_revision == action.expected_offer_revision, "STALE_LISTING")
+            _require(listing.active, "LISTING_INACTIVE")
             key = (listing.seller_id, listing.product_id)
             inventory = state.inventory.get(key)
             _require(inventory is not None and inventory.quantity >= action.quantity, "OUT_OF_STOCK")
@@ -317,7 +324,7 @@ class Engine:
             self._transfer(state, actor_id, listing.seller_id, total)
             state.inventory[key] = replace(inventory, quantity=inventory.quantity - action.quantity)
             order_id = self._id(state, "order")
-            state.orders[order_id] = Order(order_id, actor_id, listing.seller_id, listing.id, listing.product_id, action.quantity, listing.unit_price_cents, total, state.step)
+            state.orders[order_id] = Order(order_id, actor_id, listing.seller_id, listing.id, listing.product_id, action.quantity, listing.unit_price_cents, total, state.step, offer_revision=listing.offer_revision)
             self._emit(state, "purchased", actor_id, order_id, (actor_id, listing.seller_id))
             return order_id
         if isinstance(action, (SendPublic, SendPrivate)):

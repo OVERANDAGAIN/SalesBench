@@ -35,8 +35,8 @@ def run_demo(seed: int = 7) -> dict:
     buyer = ScriptedPolicy((
         ScriptedDecision(0, SendPublic("seller", "Are cups available?")),
         ScriptedDecision(0, SendPrivate("seller", "Please tell me about the bag.")),
-        ScriptedDecision(0, Purchase("cup-listing", 2, cup_price)),
-        ScriptedDecision(1, Purchase("bag-listing", 1, 450)),
+        ScriptedDecision(0, Purchase("cup-listing", 2, cup_price, 1 if cup_price == 250 else 2)),
+        ScriptedDecision(1, Purchase("bag-listing", 1, 450, 1)),
     ))
 
     def turn(actor_id: str, policy: Policy, view: View = View.MARKET) -> None:

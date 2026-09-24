@@ -84,6 +84,8 @@ class Listing:
     unit_price_cents: int
     description: str
     active: bool = True
+    offer_revision: int = 1
+    content_revision: int = 1
 
 
 @dataclass(frozen=True)
@@ -122,6 +124,7 @@ class Order:
     total_cents: int
     step: int
     settlement: str = "test_immediate"
+    offer_revision: int = 1
 
 
 @dataclass(frozen=True)
