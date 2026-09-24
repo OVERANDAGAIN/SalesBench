@@ -1,6 +1,9 @@
 import json
+import pytest
 
 from app.manual import create_manual, inspect_market
+from app.persistence import MarketSession
+from app.service import ServiceError
 from salesbench_engine.actions import Wait
 from salesbench_engine.runner.codec import canonical
 from helpers import create_market, prepare_buyers, queue_purchases, submit_wave
@@ -43,3 +46,17 @@ def test_manual_creation_private_files_and_read_only_inspection(store, tmp_path)
     assert first == second
     assert len(first["orders"]) == 1 and first["current_publication"] == 3
     assert len(first["resolution"]) > 0 and first["journal"]["count"] > 2
+
+
+@pytest.mark.parametrize("field,code", [("source_digest", "RECOVERY_CODE_MISMATCH"),
+                                       ("state_digest", "RECOVERY_STATE_MISMATCH")])
+def test_inspect_and_recover_reject_inconsistent_committed_metadata(store, field, code):
+    service = store["service"]
+    sid = create_market(service)["session_id"]
+    # Corruption is injected only into this test's isolated PostgreSQL schema.
+    with store["sessions"].begin() as db:
+        setattr(db.get(MarketSession, sid), field, "0" * 64)
+    for audit in (service.recover, lambda value: inspect_market(service, value)):
+        with pytest.raises(ServiceError) as error:
+            audit(sid)
+        assert error.value.code == code

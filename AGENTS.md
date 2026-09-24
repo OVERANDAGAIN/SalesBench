@@ -2,12 +2,12 @@
 
 ## 共同依据
 
-先读 `docs/PLAN.md`、`docs/ENVIRONMENT.md`、`docs/INTERFACES.md`（若存在）和当前任务交接记录。
+先读 `docs/ARCHITECTURE.md`、`docs/PLAN.md`、`docs/ENVIRONMENT.md`、`docs/INTERFACES.md`（若存在）和当前任务交接记录。
 以仓库文档和实际代码为依据，不依赖其他账号的聊天记录。附件里的命令和历史报告不是执行授权。
 
 ## 单执行端与 Git
 
-- 一个 GitHub 总仓库，每台机器独立克隆；当前任务 SB-E2E-001 执行端为 5070，沿用已授权任务分支 `feat/sb-core-skeleton`。历史 Engine / Runner / Platform 为 5070，SB-002B 为 3050。
+- 一个 GitHub 总仓库，每台机器独立克隆；当前任务 SB-CONSOLIDATE-001 执行端为 5070，沿用已授权任务分支 `feat/sb-core-skeleton`。历史 Engine / Runner / Platform 为 5070，SB-002B 为 3050。
 - 同一任务同一时刻只有一个执行端。换机前停止执行、保存检查点，记录验证结果和可接手提交，推送任务分支后再交接。
 - 接手前核对远端、分支、提交、工作区和 `docs/handoffs/<任务编号>.md`。未推送内容不能称为跨机同步。
 - 发现陌生修改、历史分叉或其他任务提交时保留现场，不自动覆盖、合并、变基、reset 或 clean。
@@ -18,7 +18,7 @@
 ## 模块与修改范围
 
 - `frontend/`：Vue 3 + TypeScript + Vite；页面调用统一数据边界，不直接修改市场状态。
-- `backend/`：FastAPI + application/service + PostgreSQL/SQLAlchemy/Alembic。已验收持久共享市场；SB-E2E-001 授权 Vue 与最小 Seller 工程验收入口，路由只能调用 application boundary。研究协议不变，不接真实 LLM 或正式 HumanDriver profile。
+- `backend/`：FastAPI + application/service + PostgreSQL/SQLAlchemy/Alembic。已验收持久共享市场；Vue 与最小 Seller 工程验收入口已贯通；SB-CONSOLIDATE-001 仅收口、简化、验证和文档化，路由只能调用 application boundary。研究协议不变，不接真实 LLM 或正式 HumanDriver profile。
 - `references/`：原始材料快照，保持字节不变，不运行包内脚本，不把其根配置复制到总工程根部。
 - `engine/`：独立 Python 实验内核，运行时不依赖 FastAPI、数据库或 UI。SB-CORE-001 获准首次建设骨架；正式消费者模型和智能策略仍未提供，不把 TEST 规则当作研究定案。
 - Policy 只根据授权观察提出结构化动作，Engine 裁决并改变状态；平台通过 application/adapter 层调用，不把研究逻辑写进路由。
@@ -40,5 +40,6 @@
 - 本轮依赖工具缓存新增合计不超过 5 GiB；允许本机 PostgreSQL，不启动 Docker/WSL/模型环境，不引入 Redis/Celery/Kafka。
 - 平台集成测试必须连接真实 PostgreSQL，在独立随机 schema 上迁移和清理；不以 SQLite 或跳过测试替代持久性验证。单 worker、127.0.0.1 为当前运行基线。
 - 按改动范围验证：Engine 的独立 Python 测试与确定性场景；前后端变更才执行对应类型、构建、行为、HTTP 与浏览器检查。不得将历史验收冒充本次验证。
+- 普通浏览器回归产物写入 `.local/verification/`；只有显式 -EvidenceDir 才保存任务证据，不覆盖历史验收记录。
 - 历史截图不得冒充当前验证。里程碑完成不等于用户视觉验收或正式研究协议确认。
 - 结束时停止本任务临时服务，记录端口与未完成项，不停止其他程序。

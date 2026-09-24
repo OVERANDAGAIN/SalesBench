@@ -1,4 +1,4 @@
-# 手工多角色市场验收 — SB-E2E-001
+# 手工多角色市场验收
 
 参与者入口默认是真实 Vue/H5 → `sb-platform-v1` → MarketService → Runner → Engine → PostgreSQL。这里的人工操作是工程验收输入，不是正式 HumanDriver 实验 profile。没有接模型，没有新排行榜、奖励或调度规则。
 
@@ -89,7 +89,7 @@ pwsh -File scripts/platform.ps1 inspect -SessionId '<session_id>'
 pwsh -File scripts/platform.ps1 recover -SessionId '<session_id>'
 ```
 
-`inspect` 是本机只读开发工具，读取一个 committed boundary 并验证恢复；输出 runtime/current publication、actor ID/role、pending/final receipts、Listings、订单、账户/库存、resolution 和 journal 计数/摘要、表行数。**不输出 token、token hash、私聊正文或原始 journal**。余额/订单等仍是宿主私有数据，不要把输出作为参与者 API 或普通用户下载。它不修改状态或推进 Wave。
+`inspect` 是本机只读开发工具，读取一个 committed boundary，与 recover 共用源码、版本和经济摘要校验；输出 runtime/current publication、actor ID/role、pending/final receipts、Listings、订单、账户/库存、resolution 和 journal 计数/摘要、表行数。**不输出 token、token hash、私聊正文或原始 journal**。余额/订单等仍是宿主私有数据，不要把输出作为参与者 API 或普通用户下载。它不修改状态或推进 Wave。
 
 | PostgreSQL 表 | 可核对的材料 |
 | --- | --- |
@@ -116,7 +116,7 @@ pwsh -File scripts/run.ps1 build
 pwsh -File scripts/run.ps1 test-market
 ```
 
-`test-market` 要求配置 PG 已启动，8000/4173 空闲；会创建自己的持久场次，用本机 Edge 四个隔离 context 点击真实 UI，并重启配置的本机 PG。不要和其他工作同时使用该 PG；结束清理自有 API/preview/browser，最后自行 pg-stop。截图和无凭据结果见 [验收证据](verification/SB-E2E-001/README.md)。历史 demo 自动化是单独回归，不作为真实 E2E 证据。
+`test-market` 要求配置 PG 已启动，8000/4173 空闲；会创建自己的持久场次，用本机 Edge 四个隔离 context 点击真实 UI，并重启配置的本机 PG。不要和其他工作同时使用该 PG；结束清理自有 API/preview/browser，最后自行 pg-stop。默认产物写 `.local/verification/market/<timestamp>/`，不覆盖历史验收。需要保存本任务证据可加 `-EvidenceDir docs/verification/<任务编号>`；最新结果见 [收口验收](verification/SB-CONSOLIDATE-001/README.md)，[SB-E2E-001 证据](verification/SB-E2E-001/README.md) 保留原样。历史 demo 自动化是单独回归，不作为真实 E2E 证据。
 
 当前仍是 TEST 规则：有限供应、即时采购/结算、共享库存、整数分报价、seeded resolver、既有批次预算和失败传播。**失败传播语义后续需正式确认**。本轮没有正式排行榜/推荐/奖励（排行榜入口只展示公开商家，统计为未发布）、消费者模型、物流/退款/税费、真实模型、人类实验协议、WebSocket/SSE 或正式身份系统。
 

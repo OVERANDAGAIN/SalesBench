@@ -5,12 +5,12 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import net from 'node:net'
 import { chromium } from 'playwright-core'
+import { outputDirectories } from './evidence.mjs'
 
 const frontend = fileURLToPath(new URL('../..', import.meta.url))
 const root = path.dirname(frontend)
-const config = JSON.parse(await readFile(path.join(root, '.local/runtime.json'), 'utf8'))
-const evidence = path.join(root, '.local/SB-002B-regression')
-await mkdir(evidence, { recursive: true })
+const config = JSON.parse((await readFile(path.join(root, '.local/runtime.json'), 'utf8')).replace(/^\uFEFF/, ''))
+const { evidence } = await outputDirectories('legacy-demo')
 const temp = path.join(config.cache, 'browser-temp')
 await mkdir(temp, { recursive: true })
 process.env.TEMP = temp

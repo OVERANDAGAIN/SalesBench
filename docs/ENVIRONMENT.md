@@ -1,154 +1,104 @@
-# 环境与运行
+# 本地环境与运行
 
-## 当前手工多角色验收（SB-E2E-001）
+本文件描述当前完整框架，历史安装过程/空间报告见各 handoff。所有命令在仓库根目录的 PowerShell 7 执行；服务只监听 127.0.0.1，单 Uvicorn worker。新机器独立安装依赖、初始化自己的 PG；Git 只同步代码、锁文件和经过检查的文档。
 
-复用现有 Node/pnpm/Python/uv/PostgreSQL/Edge，无新依赖、数据库迁移或全局环境变更。Vue 默认网络模式；生产构建始终绑定真实平台。历史 demo 仅在开发态显式 `VITE_BUYER_SERVICE=demo` 时启用，不能用于本次验收或作为失败回退。`run.ps1 frontend` 使用 127.0.0.1:5173；Vite/production preview 将 `/api/v1` 同源代理至 127.0.0.1:8000。
+## 工具与目录
 
-创建未推进的 2 Seller + 2 Buyer 场次：`pwsh -File scripts/platform.ps1 create-manual`。输出仅含 session ID/文件目录，不打印 token；角色 JSON 位于忽略的 `.local/manual/<session>/`。各标签页通过文件输入导入一份角色绑定，或输入 session/token；无需管理员 token 进入浏览器。开发者只读审计：`pwsh -File scripts/platform.ps1 inspect -SessionId '<sid>'`。
-
-真实浏览器自动验收：先 pg-start / migrate / build，确保 8000 / 4173 空闲，再 `pwsh -File scripts/run.ps1 test-market`。它用本机 Edge 的四个隔离 context、生产构建和真实 API/DB，不 mock 网络；自建新 session，过程中会重启所配置的本机 PostgreSQL，结束清理自有 API/preview/browser 进程，PG 保持原测试需要的运行状态，任务收尾另用 pg-stop。不要在其他工作正使用该开发 PG 时运行重启验收。截图与无凭据报告写到 `docs/verification/SB-E2E-001/`。
-
-`test-browser` 仍是明确 local demo 的历史回归，只写 `.local/SB-002B-regression/`，不覆盖旧验收截图；不能冒充真实 E2E。原前端单元测试继续保留。手工启动、绑定、Wave 操作与表映射见 [MANUAL_MARKET.md](MANUAL_MARKET.md)。
-
-## 当前持久平台（SB-PLATFORM-001 / 5070）
-
-本次明确授权 PostgreSQL，替代下方历史阶段“不启动数据库”的限制。复用 Python 3.12.14、uv 0.8.22；Engine 0.2.1 仍零运行时依赖。backend 锁定新增 SQLAlchemy 2.0.54、Alembic 1.20.0、psycopg/psycopg-binary 3.3.6，FastAPI/Uvicorn/httpx/pytest 沿用原版本。backend 以本地 editable path 引用 `../engine`，源码不复制；安装只用 `--locked`。
-
-5070 本机 PostgreSQL **17.11**（EDB Windows binaries 17.11-4），只解压 bin/lib/share，无系统服务/管理员安装、无全局 PATH 或注册表修改：
-
-| 项目 | 5070 实际位置 / 设置 |
+| 工具 | 项目要求 / 当前 5070 |
 | --- | --- |
-| 程序 | `D:\DevTools\postgresql\17.11-4\pgsql` |
-| 数据 | `D:\DevData\SalesBench\postgres-17`（仓库及 Git 之外） |
-| 日志 | `D:\DevData\SalesBench\postgres-17.log` |
-| TCP | `127.0.0.1:55432`，SCRAM 密码认证，UTF8/locale C |
-| 数据库 / 开发 owner | `salesbench_platform` / `salesbench_owner` |
-| 耐久配置 | fsync / synchronous_commit / full_page_writes 均 on |
-| 凭据 | 忽略的 `.local/platform.json`；绝不复制进 Git/文档 |
+| Git | 可 fetch/push 当前任务分支；不修改 main、不重写历史 |
+| Node / pnpm | Node >=22.13.0，当前 24.19.0；packageManager 固定 pnpm 11.19.0 |
+| Python / uv | Python >=3.12,<3.13，当前 3.12.14；uv 0.8.22 |
+| PostgreSQL | 当前验证 17.11，127.0.0.1:55432，UTF8，SCRAM；不以 SQLite 代替 |
+| 浏览器 | 使用已有 Edge/Chrome；playwright-core 在锁文件内，不下载浏览器 |
 
-本机数据库已完成初始化和 Alembic upgrade；后续正常使用只需 pg-start，不重复 initdb。`scripts/platform.example.json` 仅为无真实凭据的模板。新电脑独立安装 PostgreSQL、创建自己的 cluster/密码/admin token，填写本机路径；不复制旧电脑数据/依赖/凭据。工具目录有空格时需确保本机 pg_ctl 参数正确引用；5070 约定目录不含空格。
+| 路径 | 内容 / 是否同步 |
+| --- | --- |
+| `.local/runtime.json` | 本机工具绝对路径和缓存根；按 `scripts/runtime.example.json` 填写，忽略 |
+| `.local/platform.json` | PG 连接、管理 token、bin/data/log 路径；按 `scripts/platform.example.json` 填写，忽略 |
+| `.local/manual/<sid>/` | 含 actor token 的四份角色文件，仅本机保存，忽略 |
+| `.local/verification/<kind>/<timestamp>/` | 每次回归截图/结果与宿主诊断，默认忽略 |
+| `frontend/node_modules`、`backend/.venv`、`engine/.venv` | 各机按锁重建，忽略 |
+| `D:\DevCache\SalesBench` | 5070 pnpm / uv / 浏览器临时缓存，不同步 |
+| `D:\DevTools\postgresql\17.11-4\pgsql` | 5070 PG 程序，未安装系统服务 |
+| `D:\DevData\SalesBench\postgres-17` | 5070 PG 数据，在 Git/同步目录外；日志为相邻 `postgres-17.log` |
+
+脚本只设置当前进程及子进程的 PATH/环境变量，不改全局 PATH、注册表或系统服务。不要把真实 `.env`、配置/角色 JSON、数据库 dump、完整 journal 放 Git/普通日志。管理 token 不进入浏览器。
+
+## 从零配置新机器
+
+1. 确认目标目录为空或是正确仓库，安全 clone/fetch 后检出最新授权任务分支（当前 `feat/sb-core-skeleton`）；保留陌生修改。当前 main 尚不是完整框架基线，不自行合并。
+2. 安装或复用满足上表的工具，优先本机约定工具目录。创建 `.local/`，复制两个 example JSON 为对应的本机文件，填写实际路径。`runtime.json` 的 `browser` 指向现有浏览器可执行文件；不要同步另一台机器的配置。
+3. PostgreSQL 使用自己控制的开发 cluster。若数据目录已有 `PG_VERSION`，只核对它，不重新 initdb。全新目录可在交互终端运行（示例路径按本机实际替换）：
 
 ```powershell
-pwsh -File scripts/platform.ps1 pg-start
-pwsh -File scripts/platform.ps1 install
-# 只用于本机 cluster 已初始化、目标库尚未创建时（存在则不覆盖）：
-pwsh -File scripts/platform.ps1 init-db
-pwsh -File scripts/platform.ps1 migrate
-pwsh -File scripts/platform.ps1 test
-pwsh -File scripts/platform.ps1 demo
-pwsh -File scripts/platform.ps1 recover -SessionId '<demo 输出的 session_id>'
-pwsh -File scripts/platform.ps1 serve
-# serve 终端 Ctrl+C；完成后停止自己的 PostgreSQL：
-pwsh -File scripts/platform.ps1 pg-stop
+& 'D:\DevTools\postgresql\17.11-4\pgsql\bin\initdb.exe' `
+  -D 'D:\DevData\SalesBench\postgres-17' -U salesbench_owner -W `
+  --encoding=UTF8 --locale=C --auth-host=scram-sha-256 --auth-local=scram-sha-256
 ```
 
-serve 使用单 worker，API 只监听 `127.0.0.1:8000`。可用 `-Port` 改本机端口，不开放外网。`run.ps1 backend/test-backend` 存在 `.local/platform.json` 时同样加载配置；未配置时 /health 仍可运行，市场接口明确 503，集成测试因缺真实 PostgreSQL 明确失败。测试随机 schema 与正常业务表隔离，不清空已有数据库。
+`-W` 交互输入本机密码，不把真实密码写到命令或日志。该本地 bootstrap owner 是开发身份，不是生产最小权限方案。通过可信编辑器设置该 cluster 的 `postgresql.conf`：`listen_addresses = '127.0.0.1'`、`port = 55432`；保留 `fsync` / `synchronous_commit` / `full_page_writes` 为 on。不要改其他工作正在使用的 cluster。
 
-脚本只设置当前进程的 `SALESBENCH_DATABASE_URL` / `SALESBENCH_ADMIN_TOKEN`；不要在日志中输出它们。应用不会自动迁移；无 DB 可用时不能用 `/health` 的 ok 推断市场正常。500 ms 轮询、DB 连接/语句/锁超时分别为 5/15/5 秒，都是运行参数，不推进研究时间，也不改变市场或裁决 seed。
+填写 `.local/platform.json` 的 `database_url`（postgresql+psycopg、对应本机 owner/密码/端口、库名 salesbench_platform；密码中的 URL 保留字符需编码）、随机且保密的 `admin_token`、`pg_bin`、`pg_data`、`pg_log`、`pg_port`。当前 pg_ctl 包装器按 Windows 5070 无空格目录验证；使用示例目录风格，路径含空格的支持未验证。示例文件的占位符不能作为实际密码/token。
 
-安装来源：[PostgreSQL Windows 官方页](https://www.postgresql.org/download/windows/) → [EDB 二进制下载](https://www.enterprisedb.com/download-postgresql-binaries)。本次 ZIP `postgresql-17.11-4-windows-x64-binaries.zip` 379,726,839 bytes，下载缓存位于 `D:\DevCache\SalesBench\downloads`；本地测得 SHA-256 `B9424EE7BC60B52450FF910A3630225DF32E633F3CB29C1D126D9299D59AEA28`（本地一致性记录，不宣称官方签名）。选取的 1,591 个文件合计 141,033,226 bytes；加数据、依赖与缓存远低于本任务 5 GiB 上限。未安装 Docker/WSL/模型/浏览器/消息队列。
-
-实现依据：[SQLAlchemy Session 事务](https://docs.sqlalchemy.org/en/20/orm/session_basics.html)、[Alembic 迁移](https://alembic.sqlalchemy.org/en/latest/tutorial.html)、[PostgreSQL 锁](https://www.postgresql.org/docs/17/explicit-locking.html)。故障保证、恢复和权限见 [PLATFORM.md](PLATFORM.md)。以下 SB-CORE / SB-RUNNER / SB-002B 的工具版本与验证文字为各阶段历史，当前平台以本节和最新 handoff 为准。
-
-## 独立 Engine（SB-CORE-001 / 5070）
-
-SB-RUNNER-001 更新：`salesbench-engine` 0.2.0，仍零第三方运行时依赖。新增 Runner 不安装数据库、模型 SDK/权重、浏览器或其他大型环境。仅因本地包版本提升更新 `engine/uv.lock`，不改变 Python/构建依赖要求。
-
-新增 `engine/` 独立工程，不修改 frontend/backend 的锁文件或运行配置。复用本机 Python 3.12.14、uv 0.8.22 和 `.local/runtime.json`；环境位于 `engine/.venv`，缓存沿用配置中的缓存根。零运行时第三方依赖，测试用 unittest。构建后端固定 `uv_build==0.8.22`，当前 uv 直接使用内置后端，无需下载新工具。
-
-在根目录运行：
+4. 安装冻结/锁定依赖，建立新库和迁移（不改锁文件迁就工具）：
 
 ```powershell
 pwsh -File scripts/engine.ps1 install
-pwsh -File scripts/engine.ps1 test
-pwsh -File scripts/engine.ps1 demo -Seed 7
-pwsh -File scripts/engine.ps1 runner-demo -Seed 7 -ResolutionSeed 7 -JournalPath .local/wave-trace.json
-pwsh -File scripts/engine.ps1 replay -JournalPath .local/wave-trace.json
-pwsh -File scripts/engine.ps1 build
+pwsh -File scripts/run.ps1 install-frontend
+pwsh -File scripts/platform.ps1 install
+pwsh -File scripts/platform.ps1 pg-start
+pwsh -File scripts/platform.ps1 init-db
+pwsh -File scripts/platform.ps1 migrate
 ```
 
-安装和运行使用 `--locked`，禁止自动下载 Python；`build` 生成被忽略的 `engine/dist/` wheel/sdist。首次新增的 Engine 锁文件已生成，后续不重解析来迁就机器环境。
+`init-db` 只接受 127.0.0.1 的 salesbench_platform，已存在则保留；它不创建 cluster。`migrate` 用 Alembic，应用启动不做自动 DDL。5070 已初始化/建库/迁移，无需重复 initdb。平台测试每次使用独立随机 schema，从空迁移并只清理自己的 schema，不清空手工市场。
 
-无需 uv 的运行方式（先完成安装）：`engine\.venv\Scripts\python.exe -m salesbench_engine.scenario --seed 7`；Runner 使用 `-m salesbench_engine.runner.demo`，支持 `--seed`、`--resolution-seed`、`--journal PATH`、`--replay PATH`。先创建 journal 的父目录；PowerShell 包装脚本的 `-JournalPath` 相对调用时目录解析。没有监听端口、服务或外部模型调用。测试与审计日志保存在各机忽略的 `.local` 中；本次交付见 `docs/handoffs/SB-RUNNER-001.md`，历史见 SB-CORE-001。
+Backend 的锁定依赖以 editable path 引用 `../engine`；不需要把 Engine 安装到全局。Engine 0.2.1 零第三方运行时依赖；Backend/前端具体依赖版本以各自 pyproject/package.json 和 uv.lock/pnpm-lock.yaml 为准。本轮无新依赖或锁文件变更。
 
-5070 使用 Git 2.51.0.windows.1 / PowerShell 7.6.5 / Node 24.19.0 / pnpm 11.19.0，前后端锁定环境已独立恢复。以下环境基线和空间记录为 SB-002B 在 3050 的历史，不要求复制账号路径或依赖。
+安装依据：[PostgreSQL Windows](https://www.postgresql.org/download/windows/)、[initdb](https://www.postgresql.org/docs/17/app-initdb.html)、[uv 项目同步](https://docs.astral.sh/uv/concepts/projects/sync/)、[pnpm install](https://pnpm.io/cli/install)。5070 的具体安装与散列记录在 [Platform handoff](handoffs/SB-PLATFORM-001.md) 和历史验收材料中；本文件不要求各机器复制相同目录或凭据。
 
-基线：Windows 11 x64 / PowerShell 7.6.5 / Git 2.55.0.windows.5。
-已实测 Node 24.19.0、pnpm 11.19.0、Python 3.12.14 可执行。Node 24 为 LTS，符合 Vite 的 Node 要求。
-当前普通 Python 命令可能命中 WindowsApps 别名，使用明确的真实解释器路径。
-本机工具位置将写入忽略的 `.local/runtime.json`，不写入公共启动配置。
-
-依赖位置：`frontend/node_modules`、`backend/.venv`。
-缓存位置：`D:\DevCache\SalesBench`；固定版本 uv 安装到 `D:\DevTools\uv`。
-初始两处均不存在；本轮新增总上限 5 GiB。空间记录在任务交接中维护。
-
-Syncthing 默认配置仅覆盖 `D:\Syncthing`，未覆盖工程目录；未全面排除其他同步规则。
-不要把 Git 工作副本放入文件自动同步目录，也不要同步环境、缓存和数据库。
-
-## 数据库方案（SB-002B 历史，现已实施）
-
-阶段 2B 只确认方案。无现成实例时，后续优先使用 Windows 原生 PostgreSQL 17 受支持补丁版本。
-有可复用实例时先核对接入和版本。数据目录在仓库及同步目录外。
-本轮不安装/启动 PostgreSQL、Docker、WSL；不创建数据库、业务表、SQLAlchemy 模型或 Alembic 迁移。
-
-## 官方依据
-
-- https://vite.dev/guide/
-- https://nodejs.org/en/about/previous-releases
-- https://docs.astral.sh/uv/getting-started/installation/
-- https://docs.astral.sh/uv/concepts/projects/sync/
-- https://pnpm.io/cli/install
-- https://www.postgresql.org/support/versioning/
-
-## 本机启动与检查
-
-在总目录打开 PowerShell。`.local/runtime.json` 已配置本机真实工具位置，未进入 Git；换机器参照 `scripts/runtime.example.json` 自行填写或让工具在该机器 PATH 中可用。
-脚本只为子进程补充 Node 搜索路径，不修改全局 PATH。uv 固定为 0.8.22，官方 ZIP SHA-256 为 `5049375aa2a5162f132b2c1cb992e25d42d47d934cab8c174dbe6f60973dcc12`。
+## 日常启动与停止
 
 ```powershell
-Set-Location D:\SalesBench
-pwsh -File .\scripts\run.ps1 install-frontend
-pwsh -File .\scripts\run.ps1 install-backend
-pwsh -File .\scripts\run.ps1 typecheck
-pwsh -File .\scripts\run.ps1 build
-pwsh -File .\scripts\run.ps1 test-frontend
-pwsh -File .\scripts\run.ps1 test-backend
-pwsh -File .\scripts\run.ps1 test-browser
-pwsh -File .\scripts\run.ps1 test-preview
-pwsh -File .\scripts\verify-health.ps1
+pwsh -File scripts/platform.ps1 pg-status
+pwsh -File scripts/platform.ps1 pg-start  # 仅在未运行时
+pwsh -File scripts/platform.ps1 create-manual  # 需要新场次时；不重置已有场次
 ```
 
-两个终端分别启动，按各自终端的 Ctrl+C 停止：
+两个终端分别执行 `pwsh -File scripts/platform.ps1 serve` 与 `pwsh -File scripts/run.ps1 frontend`。前端 5173，API 8000，PG 55432；四角色导入和完整操作见 [MANUAL_MARKET.md](MANUAL_MARKET.md)。Vite 代理 `/api/v1` 到 localhost API；开发态另有 `/api/health` → `/health`，无宽泛 CORS。
 
-```powershell
-pwsh -File .\scripts\run.ps1 frontend
-pwsh -File .\scripts\run.ps1 backend
-```
+`pwsh -File scripts/run.ps1 build` 后可用 `preview` 在 4173 查看同样真实网络的生产包。默认 network；历史 demo 仅开发时显式 `VITE_BUYER_SERVICE=demo`，不能作为断网回退或真实 E2E 证据。
 
-前端 `http://127.0.0.1:5173`；后端 `http://127.0.0.1:8000/health`。
-开发代理仅 `/api/health` → `/health`，无宽泛 CORS。健康结果为 `{"status":"ok","scope":"api_process"}`。
-构建预览：`pwsh -File .\scripts\run.ps1 preview`，地址 `http://127.0.0.1:4173`。
-`test-preview` 在已经构建后自动检查生产资源并停止自己的 4173 服务。
-Vue 买方默认使用显式本地异步演示服务，不需要后端在线；FastAPI 健康检查单独验证，不冒充业务连接。
-设置 `frontend/.env.local` 的 `VITE_BUYER_SERVICE=network` 并重启前端会明确显示真实业务接口未接入，不会回退到演示数据。
-健康验证脚本会检查端口空闲，启动、重启并停止自己的进程；已有端口占用则退出，不终止其他程序。
-浏览器验证使用 playwright-core 1.62.1 和本机 Edge，通过 `.local/runtime.json` 的 `browser` 选择可执行文件；没有下载任何浏览器。
-`test-browser` 自行启动并清理 5173 服务，截图与结果写入 `docs/verification/SB-002B/`；测试夹具 `/tests/browser/harness.html` 只供本地开发测试，不是生产构建入口，也不是参与者调试后台。
-常规运行服务按所属终端 Ctrl+C 停止；不要用端口全局查杀命令终止其他程序。
+按各自终端 Ctrl+C 停前后端，最后 `pwsh -File scripts/platform.ps1 pg-stop`；只停本任务拥有的服务，不按端口全局查杀。session 与角色文件保留；重启后重新导入原角色文件或刷新原标签页即可继续/查询，无需重新 create。
 
-## 依赖锁定与版本
+## 常用检查与审计
 
-- Vue 3.5.43、TypeScript 5.9.3、Vite 7.3.6、Vue 插件 6.0.9、vue-tsc 3.3.11、Vitest 3.2.7；使用 pnpm 11.19.0。
-- Python 3.12；FastAPI 0.141.1、Uvicorn 0.53.0；开发测试 pytest 9.1.1、httpx 0.28.1。
-- 首次解析保存 `frontend/pnpm-lock.yaml` 和 `backend/uv.lock`。以后安装默认 `--frozen-lockfile` / `--locked`，uv 禁止自动下载其他 Python。
-- SB-002B 当时没有 SQLAlchemy/Alembic/数据库驱动；SB-PLATFORM-001 已按本文首节新增锁定依赖，仍无训练依赖或模型权重。
-- pnpm 11 store 位于 `D:\DevCache\SalesBench\pnpm-home\store\v11`；启动脚本通过 pnpm 11 支持的 `pnpm_config_*` 进程环境变量明确设置 store/cache/state 到批准缓存根。uv cache 位于该缓存根下的 `uv`。
-- 首次安装时 pnpm 11 不读取旧式 `.npmrc` 的非认证设置，额外写入了 `%LOCALAPPDATA%\pnpm-cache` 元数据缓存约 46.85 MiB。已修正配置方式，后续使用 D 盘缓存；保留该少量残留且计入总空间，不清理可能被其他任务复用的目录。
-- pnpm 配置已迁到 `pnpm-workspace.yaml`；运行脚本前依赖不匹配直接报错，不自动安装或替换固定工具版本。依据：https://pnpm.io/blog/releases/11.0
-- 官方 uv ZIP 保留在缓存根下 `downloads`，安装位置 `D:\DevTools\uv\0.8.22`；未修改全局安装或系统配置。
+| 目的 | 根目录命令 |
+| --- | --- |
+| 完整回归（下述全部） | `pwsh -File scripts/run.ps1 check` |
+| Engine / Runner | `pwsh -File scripts/engine.ps1 test` |
+| PostgreSQL / Backend | `pwsh -File scripts/platform.ps1 test` |
+| Vue 类型 / 测试 / 生产构建 | `pwsh -File scripts/run.ps1 typecheck` / `test-frontend` / `build` |
+| 生产默认入口 | `pwsh -File scripts/run.ps1 test-preview` |
+| 真实四角色 E2E | `pwsh -File scripts/run.ps1 test-market` |
+| 历史演示五页回归 | `pwsh -File scripts/run.ps1 test-browser` |
+| 只读宿主检查 | `pwsh -File scripts/platform.ps1 inspect -SessionId '<sid>'` |
+| 只读重放验证 | `pwsh -File scripts/platform.ps1 recover -SessionId '<sid>'` |
 
-## 收尾空间实测
+`check` 顺序执行并在第一次失败时退出；要求依赖已安装、PG 已启动/迁移、8000/4173/5173 空闲。它不安装工具、不偷偷跳过 DB 测试。`test-market` 创建自己的持久场次，用四个隔离浏览器 context 操作真实生产 Vue/API/PG，**实际重启配置的开发 PG**。不要在其他任务使用该 PG 时执行；测试清理自己的 API/preview/browser，PG 留给调用方显式停止。
 
-2026-09-23：前端依赖约 78.33 MiB，后端环境约 24.53 MiB，D 盘缓存约 130.87 MiB，uv 工具约 57.86 MiB，C 盘初期 pnpm 元数据约 46.85 MiB；另有 56 字节 pnpm 状态目录内容，创建归属未单独证明，保守计入。
-合计约 **338.45 MiB（0.331 GiB）**，低于批准的 5 GiB。度量为目录内文件逻辑长度，硬链接可能重复计数，是保守上界，不冒充文件系统物理分配精确值。
-逐目录字节数见 `docs/verification/SB-002B/space.json`。本轮没有新增浏览器二进制、数据库服务、模型或训练环境。
+浏览器各次产物默认写 `.local/verification/<kind>/<timestamp>/`；不会覆盖 `docs/verification/` 中已验收证据。需要保存任务证据时加 `-EvidenceDir docs/verification/<任务编号>`；`check` 仅把真实 market/preview 放入该目录，历史 demo 仍留 `.local`。完整 inspect 和失败截图永远留本地；提交前检查输出，不导出凭据/全量私有数据。
+
+独立 demo：`scripts/engine.ps1 demo` / `runner-demo -JournalPath .local/wave-trace.json` / `replay -JournalPath .local/wave-trace.json`；journal 父目录须存在且含私密观察，不能上传。`platform.ps1 demo` 是自动脚本 smoke，不是给人工操作者的场次；人工场次用 create-manual。
+
+`run.ps1 backend/install-backend/test-backend` 保留为旧命令兼容入口；完整平台推荐统一使用 platform.ps1。未配置平台时 `/health` 可正常而市场 API 返回 503；`scripts/verify-health.ps1` 仅历史进程/代理 smoke，不代替完整回归。
+
+## 常见接手问题
+
+- 端口占用：确认原进程归属，停止自己的旧终端或保留现场；不要自动杀别人的服务。
+- 等待其他参与者：到对应 Seller/Buyer 的窗口明确提交，未提交不是 Wait。
+- stale / price / revision 失败：检查新观察，清理旧草稿后重新决定；unknown 必须先查原 receipt，不用新 ID 猜测成交。
+- 恢复源码不匹配：检出创建该 session 的对应 Engine 版本；禁止绕过摘要检查或把 snapshot 当恢复数据。
+- 工具/依赖不匹配：核对本机配置与锁文件，不更新锁文件掩盖环境问题。
+- PG/API 重启：保留同 session 和 token，先 PG 后 API；没有自动恢复已损坏数据、备份或 HA 保证。

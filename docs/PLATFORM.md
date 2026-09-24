@@ -1,8 +1,8 @@
 # Persistent Market Service — SB-PLATFORM-001
 
-2026-09-24。本地单机 FastAPI + PostgreSQL application boundary，API schema `sb-platform-v1`。保留已经验收的 Round → Tick → Wave、Round-level procurement、冻结观察、seeded purchase resolution 与 V1 批次失败规则。Vue 本轮仍是本地演示，没有接真实 LLM 或 HumanDriver。
+2026-09-24。本地单机 FastAPI + PostgreSQL application boundary，API schema `sb-platform-v1`。保留已经验收的 Round → Tick → Wave、Round-level procurement、冻结观察、seeded purchase resolution 与 V1 批次失败规则。Vue Buyer/Seller 已通过真实网络适配器接入，没有真实 LLM 或正式 HumanDriver。
 
-SB-E2E-001 更新：Vue / Seller 工程验收页面现已接入该 boundary，见 [MANUAL_MARKET.md](MANUAL_MARKET.md)。新增本人最近 receipts 读取、create-manual 和只读 inspect CLI；无需 schema migration，Engine/Runner/事务与研究语义不变。下文 SB-PLATFORM-001 的“尚未 Vue 接入”为历史范围描述；LLM/HumanDriver 仍未接入。
+SB-E2E-001 更新：Vue / Seller 工程验收页面现已接入该 boundary，见 [MANUAL_MARKET.md](MANUAL_MARKET.md)。新增本人最近 receipts 读取、create-manual 和只读 inspect CLI；无需 schema migration，Engine/Runner/事务与研究语义不变。SB-CONSOLIDATE-001 统一 inspect/recover 的源码、版本与经济摘要校验；仍无新 migration 或协议变更。
 
 ## 职责与运行路径
 
@@ -112,7 +112,7 @@ Receipt 状态：`pending`（尚未裁决）、`rejected`（平台准入失败�
 
 依赖、配置、PG 启停见 [ENVIRONMENT.md](ENVIRONMENT.md)。不在应用启动时 `create_all`，必须显式 `alembic upgrade head`；迁移 `sb_platform_001` 可在空 PostgreSQL schema 创建 10 张业务表。SQL schema 迁移不等于实验协议/trace 迁移。
 
-`scripts/platform.ps1 test` 使用真实 PostgreSQL，每个测试建立随机隔离 schema、从空迁移、结束只删除该 schema。环境缺失时测试失败，不假称 SQLite 通过。包含两个真实 HTTP 客户端/Uvicorn 重启、跨实例重复购买、COMMIT 前后强制进程退出、unknown acknowledgement、MVCC 发布、fencing、隐私、报价、恢复摘要、失败前缀与 Round close 验证。实际数量及 demo 轨迹见 [handoff](handoffs/SB-PLATFORM-001.md)。
+`scripts/platform.ps1 test` 使用真实 PostgreSQL，每个测试建立随机隔离 schema、从空迁移、结束只删除该 schema。环境缺失时测试失败，不假称 SQLite 通过。包含两个真实 HTTP 客户端/Uvicorn 重启、跨实例重复购买、COMMIT 前后强制进程退出、unknown acknowledgement、MVCC 发布、fencing、隐私、报价、恢复摘要、失败前缀与 Round close 验证。最初平台验收见 [历史 handoff](handoffs/SB-PLATFORM-001.md)，当前完整回归见 [收口 handoff](handoffs/SB-CONSOLIDATE-001.md)。
 
 ## Known Issues / Protocol Debt
 
@@ -123,4 +123,4 @@ Receipt 状态：`pending`（尚未裁决）、`rejected`（平台准入失败�
 5. 不覆盖磁盘损坏、数据库数据丢失、关闭 durable PG 设置、备份/灾难恢复、恶意 DB 管理员篡改、未知实现 bug 的自动修复。摘要用于一致性检查，不是数字签名或防篡改审计。
 6. actor bearer + 本机管理 token 是最小绑定；没有正式用户登录、权限管理后台、TLS、公网部署、限流或生产凭据治理。5070 的数据库 owner 仅用于开发；未来部署应另做最小权限/备份方案。
 7. DB 重试保留原 intent，不保证未来外部模型请求的 exactly-once 或副作用事务。未接 provider；不能将技术失败当策略 Wait。
-8. Vue `BuyerService` v0.1 仍需 adapter 映射（Listing、机会批次、四类版本/通知、unknown receipt 和授权身份）。本轮没有变更五页 UI、NetworkBuyerService 或订阅传输。
+8. Vue 当前已有真实 MarketClient / Buyer read facade / Seller 工程页，使用持久通知轮询。旧 v0.1 单动作 demo 契约只作回归；真实适配见 INTERFACES.md。手工 E2E 不等于正式 HumanDriver 实验。

@@ -1,131 +1,49 @@
-# 接口与职责 v0.1 草案
+# 当前接口与层间适配
 
-SB-E2E-001：参与者页面默认已接真实 `sb-platform-v1`。`MarketClient` 是共享网络边界，Buyer read facade 继续提供五页 observe/subscribe；动作采用 `stage → submitBatch → getReceipt`，不把历史单动作 `execute` 的即时成功语义套到 Wave 上。Seller 同样使用 MarketClient；没有绕过 application service。
+当前 HTTP/application schema 是 **sb-platform-v1**；端点、envelope、状态码、故障保证见 [PLATFORM.md](PLATFORM.md)，运行时 OpenAPI 是 `/docs`。Market Wave 协议为 **sb-wave-v1**；前端不得借适配改变它。旧 Vue 单动作演示草案已移到 [历史契约](history/INTERFACES-v0.1.md)，仅供 demo/test 对照。
 
-新增 `GET /api/v1/sessions/{sid}/receipts` 仅列本人最近 50 条回执（pending 优先），用于重新绑定后恢复“本人已提交”；原 receipt-by-ID 保留。无数据库迁移或研究协议变更。publication/Listing revisions 原样映射，purchase 保存观察时的 expected price/revision，Engine step 显示为逻辑 Step，不伪造 UTC。当前没有排行榜观察，五页排行榜入口展示真实公开商家并明确“排名未发布”，不计算新榜单。详细映射/重试见 [MANUAL_MARKET.md](MANUAL_MARKET.md)。以下历史 Vue 演示协议仅供对照。
+## 当前调用边界
 
-SB-PLATFORM-001 更新：真实服务使用独立 `sb-platform-v1` envelope，规范见 [PLATFORM.md](PLATFORM.md)。`/api/v1/sessions/...` 通过 actor token 绑定身份，提交带 publication version / opportunity ID 的有限批次；持久 receipt 和通知游标由平台提供。下文 **仅保留 Vue 本地演示契约**，没有替换现有 BuyerService，也不是当前 HTTP API 文档。
+| 调用方 | 入口 | 边界 |
+| --- | --- | --- |
+| Buyer 五页 | `NetworkBuyerService` → `MarketClient` | observe/subscribe 是展示 facade；stage/decline 构造草稿，submitBatch 才提交完整批次 |
+| Seller 工程页 | 同一个 `MarketClient` | 按当前 opportunity 的角色/预算构造有序批次，不直接改市场状态 |
+| HTTP / 未来 Agent | FastAPI → `MarketService` | 绑定身份、持久 intent/receipt、候选推进、事务发布；不直接 Engine.execute |
+| 本机可信 CLI | 同一个 `MarketService` | 创建/恢复/只读 inspect；不作为公开参与者数据端点 |
+| Platform | SubmissionDriver → Runner → Engine | 原 Wave/结构校验/裁决链；数据库没有第二套 purchase |
 
-接入差异：`productId` 需映射 Listing；purchase 必须带 expected price / offer revision；一个 HTTP 请求表示完整机会批次（单动作也包装成批次），不立即购买；已提交 publication 与通知游标同版本，Listing 两种 revision 独立；UTC 请求时间不能代替 Round/Tick/Wave/step。旧 `unknown receipt` 需用原 ID 和原 envelope 重试，不能生成新 ID。参与者只读自己的 observation/receipt，subscribe 后续使用 durable invalidation boundary，不广播 journal。用户账户体系、UI 状态与 actor binding 仍不能混为一体。
+`MarketClient` 调用授权 observation、notifications、本人 receipts 和 actions。默认开发入口与生产构建均为 network；仅开发环境显式 `VITE_BUYER_SERVICE=demo` 启用历史演示，不存在网络错误回退。
 
-SB-RUNNER-001 更新：新增 [RUNNER.md](RUNNER.md)，明确 benchmark 的 Round/Tick/Wave、冻结观察、统一发布、offer/content revision、进程内幂等与审计重放。下文继续是历史 Vue 演示契约，不自动转成 Runner 协议。平台后续必须区分 publication version / offer_revision / content_revision / 网络通知 revision；购买要映射 listing_id、expected price 和 expected offer revision。Runner 的 Wave 调度不能被 HTTP 到达顺序替代，HumanDriver 尚未实现。
+## DTO 与语义映射
 
-SB-CORE-001 更新：下文保留 SB-002B 的 Vue 演示契约作为对照，不自动升级为正式协议。独立 Python Engine 骨架已建设，领域拆分、step、同步 Result、Policy 与平台适配差异见 [ENGINE.md](ENGINE.md)。后续业务 API 接入时重新确认 DTO、幂等、通知和持久化提交边界。
+| 概念 | 当前契约 |
+| --- | --- |
+| session / actor | token 绑定固定身份；不接受 action payload 自报 actor_id；Vue 用每标签页 sessionStorage |
+| Product / Listing | Engine Product 只有商品身份；五页展示 DTO 的 `Product.id` 实际映射 `listing_id`，不把 Offer/Inventory 混进 Engine Product |
+| 金额 / 库存 | 整数分；展示已提交授权值，合法性与扣款/扣库存只归 Engine |
+| 授权观察 | 公共 Seller/在售 Listing/消息 + 本人 own/inbox；采购机会额外给 Seller supplier offers |
+| publication | 已提交 public/projection 版本；本 actor observation/runtime 与其一致 |
+| offer / content revision | 分别对应价格/active 与销售描述；库存变化不增加 offer revision |
+| 时间 | Round/Tick/Wave 为 Runner context；订单/消息显示 Engine Step，不能当 UTC 时间 |
+| opportunity / batch | 本 actor 本 Wave 的稳定机会 ID + 可用动作/预算；显式提交有序 batch，purchase 至多一笔且在末尾 |
+| purchase | 保存观察时的 listing_id、quantity、expected_unit_price_cents、expected_offer_revision，旧草稿不自动换报价 |
+| request / action ID | Web request_id 标识完整批次、支持跨进程重试；Runner action_id 标识批次内动作。两者均不决定购买顺序 |
+| receipt | pending / rejected / succeeded / failed / aborted；pending 只表示已持久接收，不表示成交。失败/skipped 原因原样展示 |
+| 通知 / subscribe | 当前使用持久 notification polling 再读取授权观察；失败 runtime 可能不增版本，因此同时轮询观察/回执 |
+| 排行榜 / 图片 | Runner 未发布排名/成交统计，界面明确显示未发布（null）；商品使用标注的中性示意图片，不注入演示商品 |
 
-状态：**历史 Vue DRAFT / 尚未完成网络 DTO 对齐**。Engine/Runner/平台已实现；正式 Buyer/Seller 策略、消费者模型仍未提供。
-本文只约束本轮 Vue 和可替换的异步演示服务；不是已定案的正式 HTTP API。
-命名统一由 `frontend/src/domain/types.ts` 实现。所有金额是整数分；时间使用 ISO 8601 UTC；展示层转本地时间。
+同 opportunity 的 Seller 都提交后才发布，Buyer 再读取同 Tick 新价。Buyer 消息/购买也先入草稿再整批提交。切页、筛选、关弹窗不是 Engine action；明确“不购买”会从草稿移除 purchase、保留消息，空批次才变为 Wait，仍须提交。未提交持续等待。
 
-## 1. 职责与状态归属
+## 重连与失败
 
-| 层 | 本轮职责 | 正式接入后的边界（待主体确认） |
-|---|---|---|
-| Vue 页面与组件 | 导航、商家筛选、弹窗、输入草稿、数量、加载和错误展示 | 保持展示职责，不裁决购买与研究规则 |
-| BuyerService 数据访问边界 | `observe` / `execute` / `getReceipt` / `subscribe` | 由网络适配器替换；调用方不依赖传输协议 |
-| 本地演示服务 | 本场模拟商品、商家、余额、订单和消息的唯一来源；延迟和失败可注入 | 只保留为演示/测试，不成为正式研究内核 |
-| FastAPI 平台层 | 仅 `/health` | 认证、场次/参与者绑定、授权、动作协调、幂等持久化、事务及通知协调 |
-| 独立 Python 实验内核 | 本轮不存在 | 裁决研究规则、调度、状态转移与实验事件；持久化提交边界需共同确认 |
-| Buyer/Seller 策略与消费者模型 | 本轮不存在 | 获取被授权观察、输出结构化动作，不直接写库存或数据库 |
+- POST 前保存原 request ID、publication、opportunity 和完整有序 actions。响应未知时不换 ID，不编辑原请求；先查询 durable receipt，404 时也只重发原 envelope。
+- 相同 ID/内容先返回旧 receipt；同 ID 不同内容为 ACTION_ID_CONFLICT。新 ID 不能替代本机会已接收批次。
+- stale publication 为平台 rejected；PRICE_CHANGED / STALE_LISTING / OUT_OF_STOCK 等由 Engine 在 Wave 内裁决，最终 receipt 才判定经济结果。
+- 刷新/重新绑定从 server observation 与本人最近 50 个 receipts 恢复，pending 优先；列表不包含其他 actor 意图。失败网络明确离线，旧数据显示为可能过期。
+- admin token、完整 DB、journal、全场 inspect 从不提供给 Vue。actor token 不放 URL、普通日志、截图或 Git。
 
-页面状态不是市场状态。切页、筛选、详情展开、关闭、继续浏览和暂不购买只改变界面状态，本轮不机械地发服务器动作；也不把它们伪称为已持久化的实验记录。
-“暂不购买”保留可见反馈且不扣款。若研究需要采集浏览/拒购事件，另定事件规范和同意边界。
-网页账户/实验参与者是平台身份；消费者模拟器是独立研究组件，不是账户页面或身份表的别名。
+## 仍需独立设计的边界
 
-## 2. 身份、范围与观察
+正式 Agent provider/profile、Consumer Model / Seller Policy、正式用户身份与 HumanDriver、评价/排行榜/奖励、真实时间映射和履约仍未实现；不是网络 DTO 待补字段就能自动成立的功能。
 
-宿主绑定 `actorId` 和 `sessionId`，不接受模型在 query/payload 中切换身份。本地演示默认 `buyer_001` / `demo-session-01`。
-本地闭包约束只用于演示与测试，不构成生产认证。正式身份从服务端认证上下文取得。
-
-所有成功观察包含 `ok`、`schemaVersion: "0.1-draft"`、`mode: "local-demo"`、`sessionId`、`revision`、`view`、当前 `actor` 和公开 `merchants`。
-`revision` 为当前买家可见变更序号，不是正式实验轮次。返回独立快照，调用方修改不影响服务。
-
-| view | query 附加字段 | 返回数据 |
-|---|---|---|
-| `leaderboard` | 无 | `leaderboard`：公开商家 + 演示收入、成交件数、rank |
-| `products` | 可选 `merchantId` | `products`：按演示顺序和筛选的公开商品 |
-| `product` | 必需 `productId` | `product`：规格、描述、价格、库存、商家、图片 URL |
-| `public` | 必需 `merchantId` | 本商家 `products`、公开 `messages` |
-| `private` | 必需 `merchantId` | 本商家 `products`、本人 `messages`、本人会话 `conversations` 摘要 |
-| `me` | 无 | 本人 `account` 与 `orders` |
-
-商品统一 `priceCents`、`stock`、`imageUrl`；订单统一 `unitPriceCents`、`totalCents`、`createdAt`。
-消息统一 `channel`、`merchantId`、`author`、`text`、`createdAt`、`isPreset`。author 内含 `id/name/role`。
-私聊、订单、余额只属于当前绑定买家；不暴露其他买家状态、内部成本、策略参数或全部市场对象。
-图片作为网页资源 URL；不嵌入 Base64，不把图片字节塞入模型文本观察。
-
-```json
-{"view":"product","productId":"p1"}
-```
-
-非法观察返回 `{"ok":false,"error":{"code":"INVALID_QUERY","message":"...","retryable":false}}`。
-查询失败不回退到其他用户或默认全量市场。
-
-## 3. 动作与回执
-
-`execute(action): Promise<Receipt>`，调用前界面显示等待，成功以前不预扣余额、不显示购买完成。
-
-| type | payload | 本地演示效果 |
-|---|---|---|
-| `purchase` | `productId`, `quantity`, `expectedUnitPriceCents` | 校验后一次更新余额、库存、订单、演示榜单 |
-| `send_public` | `merchantId`, `text` | 写入本人公开消息，稍后另行追加预设回复 |
-| `send_private` | `merchantId`, `text` | 写入本人私聊，稍后另行追加预设回复 |
-
-不接受顶层/载荷多余字段。`quantity` 是 1–99 的整数，消息去空白后 1–500 字。
-前端预校验只帮助用户；权威演示校验在服务内部，所有必要验证通过后才写入状态。
-
-```json
-{"id":"purchase-example-001","type":"purchase","payload":{"productId":"p1","quantity":1,"expectedUnitPriceCents":8900}}
-```
-
-回执共用 `schemaVersion`、`actionId`、`actorId`、`sessionId`、`revision`、`replayed`。
-`status` 为 `pending/succeeded/failed`；只有 `succeeded` 的 `ok` 为 true。
-
-```json
-{"ok":false,"schemaVersion":"0.1-draft","status":"pending","actionId":"purchase-example-001","actorId":"buyer_001","sessionId":"demo-session-01","revision":0,"replayed":false}
-```
-
-```json
-{"ok":true,"schemaVersion":"0.1-draft","status":"succeeded","actionId":"purchase-example-001","actorId":"buyer_001","sessionId":"demo-session-01","revision":1,"replayed":false,"result":{"type":"purchase","order":{"id":"SB-00011","productId":"p1","productName":"陶瓷随行杯","variant":"奶油白 · 380mL","merchantId":"s1","merchantName":"松间生活","unitPriceCents":8900,"quantity":1,"totalCents":8900,"createdAt":"2026-09-23T06:00:00.000Z","status":"simulated_completed"},"balanceCents":41100,"remainingStock":7}}
-```
-
-```json
-{"ok":false,"schemaVersion":"0.1-draft","status":"failed","actionId":"purchase-example-002","actorId":"buyer_001","sessionId":"demo-session-01","revision":1,"replayed":false,"error":{"code":"OUT_OF_STOCK","message":"剩余库存不足，请调整数量。","retryable":false}}
-```
-
-成功发消息的 `result` 使用 `type: "message"`、`messageId`、`merchantId`、`channel`、`replyStatus: "scheduled"`。成功只表示本人消息写入，不代表预设回复已经出现。
-
-## 4. 等待、失败与重复请求
-
-- 动作 ID 由调用方生成，作用域是绑定的场次与买家；同 ID + 同语义载荷的重复请求复用结果，`replayed: true`，不得重复扣款或重复调度回复。
-- 同 ID + 不同载荷返回 `ACTION_ID_CONFLICT`。JSON 字段顺序不影响语义指纹。
-- 演示 `execute` 等待终态；等待期间 `getReceipt(actionId)` 可返回 `pending`。未知 ID 返回 null，不表示成功。
-- 已完成的成功和业务失败均缓存。本地缓存随刷新丢失，不宣称跨进程或数据库幂等。
-- 业务失败代码包括 `INVALID_ACTION/INVALID_PAYLOAD/INVALID_QUANTITY/PRODUCT_NOT_FOUND/MERCHANT_NOT_FOUND/PRICE_CHANGED/OUT_OF_STOCK/INSUFFICIENT_BALANCE/INVALID_MESSAGE`。失败不修改库存、余额、订单、榜单或消息。
-- 演示可注入提交前暂时故障，作为可重试传输异常，保证该故障未提交状态。正式网络超时可能结果未知，必须使用相同动作 ID 重查/重试，不能自动换 ID 再扣一次。
-- 真实网络适配器尚未实现，选择真实模式必须显式报 `NOT_CONNECTED`。禁止 HTTP 失败后悄悄返回模拟成功。
-
-## 5. 变化通知
-
-`subscribe(listener)` 返回取消订阅函数；通知用于失效当前观察、重新读取，不把整份内部状态广播给页面。
-topics 为 `products/leaderboard/account/orders/messages`；消息事件附加 `merchantId/channel`。私聊通知只投递给本人；公开消息和公开库存变化可投递给本场其他买家。
-
-```json
-{"sessionId":"demo-session-01","revision":2,"topics":["messages"],"merchantId":"s1","channel":"private"}
-```
-
-本轮通过内存监听器和延迟队列实现；不是 WebSocket、真实多用户或数据库提交事件。未来 SSE/WebSocket/轮询待后端阶段选择；重连后先重新读取观察，不能假设通知从未丢失。
-预设回复延迟独立于发送回执。测试驱动可注入外部商品/消息变更；控制入口只存在演示测试宿主，不向参与者页面或 Agent 暴露。
-
-## 6. Agent 接入位置
-
-Agent 直接调用绑定后的 BuyerService 结构化边界，可在无 DOM 的单元测试中使用；不要求打开网页，不操作弹窗。
-未来 Python Agent 在服务端绑定身份/场次后调用同一业务语义，具体 Python 适配包及 HTTP 传输留待主体交付确认。
-本轮可选浏览器演示入口只是适配器，不作为 Python Agent 的必需依赖。不暴露 `bindBuyer`、测试控制器或全量市场状态。
-
-## 7. 未决项及迁移判断
-
-排名指标、推荐机制、时间推进、实验轮次、奖励、消费者心理、正式购买/履约语义、状态所有权与持久化提交边界均未定案。
-本轮配置明确固定：种子三商家六商品、固定商品顺序、模拟成交额排序、关键词预设回复、模拟购买完成；刷新重置。
-数据库事务、持久幂等、认证授权、事件重放和真实通知全部未实现。
-
-结论：没有必须先接入 Python 主体才能迁移的界面依赖。用可替换服务和演示命名隔离未决项，可以进入 C；不实现无法隔离的研究语义。
+**失败传播语义后续需正式确认**：当前 Runner 保留成功前缀，业务失败后跳过剩余动作，可能使失败消息阻止末尾 purchase。本轮不改变此规则。细节和当前保证见 [ARCHITECTURE.md](ARCHITECTURE.md)、RUNNER/PLATFORM。

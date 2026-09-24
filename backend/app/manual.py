@@ -1,7 +1,6 @@
 """Local developer tools only. No participant endpoint or alternate economic rules."""
 
 from collections import Counter
-import asyncio
 from pathlib import Path
 import json
 from uuid import uuid4
@@ -10,10 +9,9 @@ from sqlalchemy import func, select
 
 from salesbench_engine.models import Account, Buyer, Experiment, MarketSetup, Product, Seller, Supplier, SupplierOffer
 from salesbench_engine.runner.codec import data
-from salesbench_engine.runner.recovery import restore_committed
 
 from .persistence import ActionReceipt, ActorBinding, BatchReceipt, JournalEntry, Publication
-from .service import SubmissionDriver
+from .service import ServiceError
 
 
 def create_manual(service, directory: Path):
@@ -41,7 +39,10 @@ def inspect_market(service, sid):
     """Host-only, read-only committed summary. Omit tokens, hashes and message text."""
     with service.sessions() as db:
         row = service._locked(db, sid)
+        if row.source_digest != service.code_digest:
+            raise ServiceError("RECOVERY_CODE_MISMATCH", 503)
         records = service._load_records(db, row)
+        expected = (row.published_version, row.state_digest)
         bindings = db.execute(select(ActorBinding.actor_id, ActorBinding.role).where(ActorBinding.session_id == sid)).all()
         receipts = list(db.scalars(select(BatchReceipt).where(BatchReceipt.session_id == sid).order_by(BatchReceipt.created_at)))
         pub = db.get(Publication, (sid, row.published_version))
@@ -61,7 +62,7 @@ def inspect_market(service, sid):
                 "publication_context": latest["context"]}
         report["table_counts"] = {model.__tablename__: db.scalar(select(func.count()).select_from(model).where(model.session_id == sid))
                                   for model in (ActorBinding, BatchReceipt, ActionReceipt, Publication, JournalEntry)}
-    runner = asyncio.run(restore_committed(records, {a: SubmissionDriver() for a in records[0]["drivers"]}))
+    runner = service._restore_verified(records, expected)
     state = runner.economic_state()
     report.update(orders=data(state.orders), accounts=data(state.accounts), inventory=data(state.inventory),
                   owned_listings=data(state.listings))

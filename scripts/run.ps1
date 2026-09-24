@@ -1,10 +1,33 @@
 param(
   [Parameter(Mandatory=$true)]
-  [ValidateSet('install-frontend','install-backend','frontend','backend','typecheck','build','test-frontend','test-backend','test-browser','test-preview','test-market','preview')]
-  [string]$Task
+  [ValidateSet('check','install-frontend','install-backend','frontend','backend','typecheck','build','test-frontend','test-backend','test-browser','test-preview','test-market','preview')]
+  [string]$Task,
+  [string]$EvidenceDir
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
+if ($EvidenceDir -and $Task -notin @('check','test-browser','test-preview','test-market')) { throw '-EvidenceDir is only for browser verification or check' }
+if ($EvidenceDir) { $EvidenceDir = [IO.Path]::GetFullPath($EvidenceDir, $root) }
+if ($Task -eq 'check') {
+  # PostgreSQL must already be started/migrated. Fail fast; never install or replace tools.
+  # test-market owns its API/preview, and restarts the configured development PG.
+  $checks = @(
+    @('engine.ps1','test'), @('platform.ps1','test'), @('run.ps1','typecheck'),
+    @('run.ps1','test-frontend'), @('run.ps1','build'), @('run.ps1','test-preview'),
+    @('run.ps1','test-market'), @('run.ps1','test-browser')
+  )
+  foreach ($check in $checks) {
+    Write-Output "Checking $($check[0]) $($check[1])"
+    $checkArgs = @('-NoProfile','-File',(Join-Path $PSScriptRoot $check[0]),$check[1])
+    if ($EvidenceDir -and $check[1] -in @('test-preview','test-market')) { $checkArgs += @('-EvidenceDir',$EvidenceDir) }
+    if ($check[1] -eq 'test-browser') { $env:SALESBENCH_EVIDENCE_DIR = $null }
+    & (Get-Process -Id $PID).Path @checkArgs
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+  }
+  Write-Output 'PASS complete system regression (Engine, Runner, PostgreSQL, Vue, real market, legacy UI)'
+  exit 0
+}
+if ($EvidenceDir) { $env:SALESBENCH_EVIDENCE_DIR = $EvidenceDir }
 $configPath = Join-Path $root '.local/runtime.json'
 $config = if (Test-Path -LiteralPath $configPath) { Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json } else { $null }
 function Resolve-Tool([string]$name) {

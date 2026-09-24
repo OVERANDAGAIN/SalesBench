@@ -7,14 +7,13 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import net from 'node:net'
 import { chromium } from 'playwright-core'
+import { outputDirectories } from './evidence.mjs'
 
 const frontend = fileURLToPath(new URL('../..', import.meta.url)), root = path.dirname(frontend)
 const readJSON = async file => JSON.parse((await readFile(file, 'utf8')).replace(/^\uFEFF/, ''))
 const config = await readJSON(path.join(root, '.local/runtime.json'))
 const platform = await readJSON(path.join(root, '.local/platform.json'))
-const evidence = path.join(root, 'docs/verification/SB-E2E-001')
-const local = path.join(root, '.local/SB-E2E-001')
-await mkdir(evidence, { recursive: true }); await mkdir(local, { recursive: true })
+const { evidence, local } = await outputDirectories('market')
 process.env.TEMP = path.join(config.cache, 'browser-temp'); process.env.TMP = process.env.TEMP
 await mkdir(process.env.TEMP, { recursive: true })
 function platformCommand(task, args = []) {

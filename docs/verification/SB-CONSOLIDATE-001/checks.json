@@ -1,0 +1,26 @@
+{
+  "checkedAt": "2026-09-24T10:12:08.0058453Z",
+  "status": "passed",
+  "command": "pwsh -NoProfile -File scripts/run.ps1 check -EvidenceDir docs/verification/SB-CONSOLIDATE-001",
+  "exit_code": 0,
+  "engine_runner": {
+    "passed": 64
+  },
+  "backend_postgresql": {
+    "passed": 31,
+    "warnings": 2
+  },
+  "frontend": {
+    "typecheck": "passed",
+    "passed": 26,
+    "production_build": "passed"
+  },
+  "production_preview": "passed",
+  "real_market_browser_phases": 9,
+  "legacy_demo_browser_phases": 9,
+  "historical_completed_session_recovery": "passed",
+  "preserved_manual_session_publication": 0,
+  "protocol_changed": false,
+  "engine_source_changed": false,
+  "dependencies_changed": false
+}

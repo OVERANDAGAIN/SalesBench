@@ -1,6 +1,6 @@
 # Market Wave Runner — SB-RUNNER-001
 
-2026-09-24，`salesbench-engine` 0.2.0。Runner 位于 `engine/src/salesbench_engine/runner/`，与 Engine 同一个独立 Python 包，零第三方运行时依赖。无需 Vue、FastAPI、数据库或真实模型服务。LLM-first 指协议直接面向模型的冻结观察和结构化批次；不表示已经接入正式模型/策略。
+2026-09-24，当前 `salesbench-engine` **0.2.1**。Runner 位于 `engine/src/salesbench_engine/runner/`，与 Engine 同一个独立 Python 包，零第三方运行时依赖。无需 Vue、FastAPI、数据库或真实模型服务。LLM-first 指协议直接面向模型的冻结观察和结构化批次；不表示已经接入正式模型/策略。
 
 SB-PLATFORM-001 将包升级至 **0.2.1**，只增加下面的可信宿主步进与恢复契约。本文的研究语义、排序、批次失败传播和版本规则不变。平台持久保证见 [PLATFORM.md](PLATFORM.md)，不归独立 Runner 内存缓存承担。
 
@@ -138,13 +138,13 @@ pwsh -File scripts/engine.ps1 build
 
 独立已安装包：`python -m salesbench_engine.runner.demo --journal trace.json`；重放用 `--replay trace.json`。示例固定 3 Seller、4 Buyer、2 Product、2 Round、每 Round 3 Tick；每 Round 采购，首 Tick 的 4 Buyer 争购 seller-1 的最后一件 cup，下一 Tick Seller 改价/描述并回复。CLI 打印结构化 Wave/purchase/order 轨迹和 state digest；用于 smoke，不冻结研究策略。
 
-## 平台待对齐与 Known Issues / Protocol Debt
+## 当前平台边界与 Known Issues / Protocol Debt
 
 - **失败传播语义后续需正式确认**：V1 保留前缀、业务失败跳过尾部，可能令一条失败消息阻止购买；当前明确实现此规则，不将其宣称为永久研究协议。
 - TEST 经济规则仍为即时采购交货/付款、即时全额收款、有限供给、共享库存，无物流/退款/佣金/税。正式消费者、Seller 策略、排行榜/奖励、真实时间尺度、供给再生尚未定义。
 - 无 HumanDriver、conversation micro-wave、真实 provider 集成；冻结观察和批次上限已经保留扩展点，未实现能力会拒绝而非猜测。
 - 单进程单写者，journal/cache/发布均为内存。全量历史观察与状态表 delta 的存储成本随运行增长；LLM 输入超限终止，不静默截断。面向小型实验，未进行大规模吞吐/成本测试。
 - Engine 与 Runner 两层原子性不同：单动作原子；Wave 正常完成才发布但不是整 Wave 回滚事务。异常前缀需要宿主处理，不能把旧发布状态当成当前内部经济状态。
-- FastAPI 后续应通过 application/adapter 创建并管理 Runner，绑定 actor/experiment，输出授权 published projection；不得在路由复制规则、直接 execute 绕开 Wave 或按 HTTP 先后裁决。
-- Vue v0.1 的 productId、UTC、单动作 receipt/subscribe 仍为演示契约。需另定 Listing 映射、purchase expected revision、三种版本（publication/offer/content）与网络 revision、Wave 机会/回执、逻辑时间与诊断时间、私有投影。
-- 独立 Runner 不承担持久幂等/数据库事务。SB-PLATFORM-001 已在 application 层实现这些能力，见 PLATFORM.md；Vue/真实模型仍未联调。
+- FastAPI 当前通过 MarketService 创建/恢复候选 Runner，绑定 actor/session，提交后输出授权 projection；路由不得直接 execute 绕开 Wave 或按 HTTP 先后裁决。
+- Vue 已通过 sb-platform-v1 映射 Listing、三种版本、逻辑 step、opportunity/批次/receipt 与私有投影。历史 v0.1 演示契约仅供对照，见 INTERFACES.md。
+- 独立 Runner 不承担持久幂等/数据库事务。SB-PLATFORM-001 已在 application 层实现这些能力，见 PLATFORM.md；Vue Buyer/Seller 已完成真实 E2E，真实模型仍未接入。

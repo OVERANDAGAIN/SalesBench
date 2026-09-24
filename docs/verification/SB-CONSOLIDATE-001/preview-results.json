@@ -1,0 +1,11 @@
+{
+  "checkedAt": "2026-09-24T10:02:57.402Z",
+  "status": "passed",
+  "port": 4173,
+  "browser": "153.0.4234.48",
+  "entry": "real-platform-binding",
+  "placeholderLoaded": true,
+  "testControllerExposed": false,
+  "errors": [],
+  "serverStoppedOnExit": true
+}

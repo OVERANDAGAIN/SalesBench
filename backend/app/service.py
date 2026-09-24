@@ -424,6 +424,11 @@ class MarketService:
                 raise ServiceError("RECOVERY_CODE_MISMATCH", 503)
             records = self._load_records(db, row)
             expected = (row.published_version, row.state_digest)
+        return self._restore_verified(records, expected)
+
+    @staticmethod
+    def _restore_verified(records, expected):
+        """Shared host audit: replay AND compare the committed version/state digest."""
         try:
             runner = asyncio.run(restore_committed(records, {a: SubmissionDriver() for a in records[0]["drivers"]}))
         except ReplayMismatch:
