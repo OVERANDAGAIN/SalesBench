@@ -1,0 +1,18 @@
+{
+  "session_id": "manual-67b69526cc514dcc9d74fbc0fd354454",
+  "migration_head": "sb_metrics_001",
+  "metric_snapshots": 17,
+  "leaderboard_snapshots": 7,
+  "source_publications": [
+    0,
+    3,
+    5,
+    7,
+    11,
+    13,
+    15
+  ],
+  "full_committed_replay_matches": true,
+  "orders": 4,
+  "legacy_session_retained_and_recoverable": true
+}

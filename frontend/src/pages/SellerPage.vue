@@ -2,8 +2,9 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { MarketClient } from '../platform/client'
 import type { MarketAction } from '../platform/types'
-import { amount } from '../domain/format'
+import { amount, rankChange } from '../domain/format'
 import WavePanel from '../components/WavePanel.vue'
+import LeaderboardContext from '../components/LeaderboardContext.vue'
 const props = defineProps<{ client: MarketClient }>()
 defineEmits<{ logout: [] }>()
 const observation = computed(() => props.client.state.observation!)
@@ -44,6 +45,7 @@ function add() {
   <main class="seller-shell">
     <header class="seller-header"><div><div class="eyebrow">SalesBench · 工程验收</div><h1>Seller 操作台</h1><p>真实 Platform → Runner → Engine → PostgreSQL · 非正式经营后台</p></div><strong data-testid="seller-balance">{{ own.actor.name }} · ¥{{ amount(own.account.balance_cents) }}</strong></header>
     <WavePanel :client="client" @logout="$emit('logout')" />
+    <section class="panel seller-section"><h2>公开利润排行榜</h2><LeaderboardContext :snapshot="observation.leaderboard" /><div class="table-wrap"><table data-testid="leaderboard-table"><thead><tr><th>排名</th><th>Seller</th><th>利润（开发口径）</th><th>排名变化</th></tr></thead><tbody><tr v-for="row in observation.leaderboard?.rows ?? []" :key="row.seller_id" :data-seller-id="row.seller_id"><td>{{ row.current_rank }}</td><td>{{ row.display_name }}</td><td>¥ {{ amount(row.dev_profit_cents) }}</td><td>{{ rankChange(row.current_rank, row.previous_rank) }}</td></tr></tbody></table></div></section>
     <div class="seller-grid">
       <section class="panel seller-section"><h2>构造本轮动作</h2><form class="seller-form" @submit.prevent="add">
         <label>动作类型<select v-model="form.type" aria-label="Seller 动作类型"><option disabled value="">请选择</option><option v-for="o in options" :key="o.value" :value="o.value">{{ o.label }}</option></select></label>

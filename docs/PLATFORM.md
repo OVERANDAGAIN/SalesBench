@@ -4,6 +4,8 @@
 
 SB-E2E-001 更新：Vue / Seller 工程验收页面现已接入该 boundary，见 [MANUAL_MARKET.md](MANUAL_MARKET.md)。新增本人最近 receipts 读取、create-manual 和只读 inspect CLI；无需 schema migration，Engine/Runner/事务与研究语义不变。SB-CONSOLIDATE-001 统一 inspect/recover 的源码、版本与经济摘要校验；仍无新 migration 或协议变更。
 
+SB-METRICS-001 更新：新场次默认启用持久开发利润榜/宿主指标；显式迁移 `sb_metrics_001` 新增两个派生表和 session policy。指标只在经济 COMMIT 后读取 DB committed trace 计算，不更改经济事务或原恢复契约；旧场次 NULL policy 不伪造历史榜。版本/故障边界见 [METRICS.md](METRICS.md)。
+
 ## 职责与运行路径
 
 ```text
@@ -33,6 +35,8 @@ HTTP / 未来 Agent adapter
 | `resolutions` | Runner 生成的采购/购买等裁决顺序，不重新计算经济结果 |
 | `semantic_events` | Engine 产生的事件及 audience，仅供宿主审计 |
 | `outbox_notices` | 与 publication 同事务保存的版本失效通知，内容不含私有状态 |
+| `leaderboard_snapshots` | 来源 publication 的公共榜单白名单、确定性 ID 与 digest |
+| `metric_snapshots` | 精确 committed transcript_count 的宿主指标与该时点公开榜单映射、payload digest |
 
 **恢复权威是初始 setup + 已提交 canonical transcript**。账户、库存、Listing 的 offer/content revision、订单、消息、事件/ID 计数器通过同版本 Runner/Engine 重放恢复；不是另写一套 SQL purchase，也不把 `snapshot()` 当反序列化契约。SQL 表保存规范 JSON/结果/投影，不独立扣款或扣库存。投影是读取加速材料，恢复会核对 trace/source/state 摘要。
 
@@ -45,6 +49,7 @@ Journal、semantic events、resolution、完整状态摘要和所有私有 proje
 3. 释放数据库锁后，`restore_committed` 重建一次性 Runner，核对记录与当前机会，再执行**一个原有边界**。此时只存在私有候选，API 仍读旧 committed projection。
 4. `commit_candidate` 再锁 session，核对 fence + base publication + base trace digest。旧 writer 返回 `WRITER_FENCED`，没有写权限。当前 writer 在一个事务里追加 journal/action/result/resolution/events，结算 receipt，更新 runtime、publication、全部 actor projections 和 outbox。
 5. COMMIT 成功即是 actor publication。之后不需要再替换某个内存市场才能读到新状态。API observation 的 projection + runtime 通过一次 SQL JOIN 读取，避免跨两个 READ COMMITTED statement 混入不同版本。
+6. 启用 Metrics 的场次从该已提交记录物化指标；异常退出可确定性补齐。参与者观察扩展 JOIN 精确 metric boundary 和公共榜单，缺失先有限补齐再 503，不混用版本。原 receipt/projection/outbox 的经济 COMMIT 不回滚；原 ID 幂等保持。
 
 每场只有当前 fenced writer 能提交经济边界。多个错误启动的 worker 可能重复计算候选、互相 fence，不能重复提交；当前运维仍要求一个 worker，未承诺多 worker 的吞吐/公平性。fence 只控制提交，操作次数/HTTP 时间/线程执行顺序不参与市场排序。
 
@@ -76,15 +81,17 @@ Journal、semantic events、resolution、完整状态摘要和所有私有 proje
 | 请求 | 认证 / 行为 |
 | --- | --- |
 | `GET /health` | 无认证；只说明 API 进程响应，不检查 DB |
-| `POST /api/v1/sessions` | 管理 bearer；`session_id, setup, market_config`，创建初始版本 0 |
+| `POST /api/v1/sessions` | 管理 bearer；`session_id, setup, market_config`，可选 metrics_policy.refresh（默认 tick_close 或 round_close），创建初始版本 0 |
 | `POST /api/v1/sessions/{sid}/bindings/rotate` | 管理 bearer；body `{"actor_id":"buyer-1"}`；重发新 token 并撤销旧 token |
-| `GET /api/v1/sessions/{sid}/observation` | actor bearer；返回本人 state、opportunity、published_version 与 committed runtime |
+| `GET /api/v1/sessions/{sid}/observation` | actor bearer；返回本人 state、opportunity、published_version、committed runtime 与公共 leaderboard |
 | `GET /api/v1/sessions/{sid}/runtime` | actor bearer；返回 committed phase/next boundary/step/version，无他人进度或批次 |
 | `POST /api/v1/sessions/{sid}/actions` | actor bearer；保存一份完整 bounded batch；202 pending、409 rejected、200 已完成的重复请求 |
 | `GET /api/v1/sessions/{sid}/receipts/{request_id}` | actor bearer；只查本人 receipt；未知为 404 `RECEIPT_NOT_FOUND` |
 | `GET /api/v1/sessions/{sid}/receipts` | actor bearer；本人最近 50 条回执，pending 优先；支持刷新/重新绑定后识别当前已提交机会 |
 | `GET /api/v1/sessions/{sid}/notifications?after_version=2` | actor bearer；最多 100 条按版本排序的 invalidation，游标取最后版本 |
 | `POST /api/v1/sessions/{sid}/run` | 管理 bearer；显式推进一个 ready 边界，通常由后台 worker 完成 |
+| `GET /api/v1/admin/sessions/{sid}/metrics` | 管理 bearer；宿主事实指标及轨迹，可选 publication_version；不返回 token/私聊正文/raw journal |
+| `GET /api/v1/admin/sessions/{sid}/leaderboard` | 管理 bearer；公共榜单历史及 publication 映射，可选 publication_version |
 
 创建 body 的 setup 使用 Engine `MarketSetup` 的规范 JSON：experiment、suppliers、sellers、buyers、products、offers、accounts；示例来自 `app.cli.demo` / `salesbench_engine.runner.demo.demo_setup`。这些是受信管理操作，不允许 actor 改初始市场。相同 session ID/相同配置的创建重试返回现有 session，`actor_tokens=null`；若初次响应丢失，由管理端 rotate 需要的 token。不同配置使用同 ID 为冲突。
 
@@ -110,7 +117,7 @@ Receipt 状态：`pending`（尚未裁决）、`rejected`（平台准入失败�
 
 ## 运行、迁移与验收
 
-依赖、配置、PG 启停见 [ENVIRONMENT.md](ENVIRONMENT.md)。不在应用启动时 `create_all`，必须显式 `alembic upgrade head`；迁移 `sb_platform_001` 可在空 PostgreSQL schema 创建 10 张业务表。SQL schema 迁移不等于实验协议/trace 迁移。
+依赖、配置、PG 启停见 [ENVIRONMENT.md](ENVIRONMENT.md)。不在应用启动时 `create_all`，必须显式 `alembic upgrade head`；迁移 `sb_platform_001` 创建 10 张业务表，`sb_metrics_001` 再加两个派生表，共 12 张应用表。空库与现存旧库均使用显式迁移；SQL schema 迁移不等于实验协议/trace 迁移。
 
 `scripts/platform.ps1 test` 使用真实 PostgreSQL，每个测试建立随机隔离 schema、从空迁移、结束只删除该 schema。环境缺失时测试失败，不假称 SQLite 通过。包含两个真实 HTTP 客户端/Uvicorn 重启、跨实例重复购买、COMMIT 前后强制进程退出、unknown acknowledgement、MVCC 发布、fencing、隐私、报价、恢复摘要、失败前缀与 Round close 验证。最初平台验收见 [历史 handoff](handoffs/SB-PLATFORM-001.md)，当前完整回归见 [收口 handoff](handoffs/SB-CONSOLIDATE-001.md)。
 
@@ -124,3 +131,4 @@ Receipt 状态：`pending`（尚未裁决）、`rejected`（平台准入失败�
 6. actor bearer + 本机管理 token 是最小绑定；没有正式用户登录、权限管理后台、TLS、公网部署、限流或生产凭据治理。5070 的数据库 owner 仅用于开发；未来部署应另做最小权限/备份方案。
 7. DB 重试保留原 intent，不保证未来外部模型请求的 exactly-once 或副作用事务。未接 provider；不能将技术失败当策略 Wait。
 8. Vue 当前已有真实 MarketClient / Buyer read facade / Seller 工程页，使用持久通知轮询。旧 v0.1 单动作 demo 契约只作回归；真实适配见 INTERFACES.md。手工 E2E 不等于正式 HumanDriver 实验。
+9. Metrics 为额外可靠派生视图，完整重放补齐时持 session 锁；仅验证小场次。公式/策略/source digest 固定，旧源码不匹配 fail closed。开发利润不含库存估值或未来费用，非最终 benchmark 评分；具体限制见 METRICS.md。

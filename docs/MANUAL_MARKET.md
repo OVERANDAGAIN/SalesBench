@@ -1,6 +1,6 @@
 # 手工多角色市场验收
 
-参与者入口默认是真实 Vue/H5 → `sb-platform-v1` → MarketService → Runner → Engine → PostgreSQL。这里的人工操作是工程验收输入，不是正式 HumanDriver 实验 profile。没有接模型，没有新排行榜、奖励或调度规则。
+参与者入口默认是真实 Vue/H5 → `sb-platform-v1` → MarketService → Runner → Engine → PostgreSQL。这里的人工操作是工程验收输入，不是正式 HumanDriver 实验 profile。新场次提供开发利润榜与宿主 Metrics；没有接模型、正式评价/奖励或新调度规则。
 
 ## 启动与创建场次
 
@@ -80,6 +80,22 @@ A 在 T2 改价/描述后，同 Tick Buyer 看见 400 分、offer revision 2 / c
 
 推荐在 publication 8、R2 尚未采购时测试恢复：先 Ctrl+C 停 API，`pg-stop`，观察页面离线；再 `pg-start` 与 `serve`。不重新 create、不 rotate token，刷新原标签页，读取同一 session 后继续 R2。完成后的场次也可重启后查询。
 
+SB-METRICS-001 实际四角色轨迹沿用上表，新增榜单检查（金额为分）：
+
+| 当前 publication | 榜单来源 publication | 公开 A / B 利润 | 宿主 A / B 利润 |
+| --- | --- | --- | --- |
+| 0 初始 | 0 | 0 / 0 | 0 / 0 |
+| 1 采购后、2 Seller 后、首位 Buyer pending | 0 | 0 / 0 | -100 / -300 |
+| 3 首个 Tick 竞争成交 | 3 | 200 / -300 | 200 / -300 |
+| 4 Seller 调价/消息 | 3 | 200 / -300 | 200 / -300 |
+| 5 第二 Tick 成交 B | 5 | 200 / 200 | 200 / 200 |
+| 8 Round close，刷新及 API/PG 重启 | 7 | 200 / 200 | 200 / 200 |
+| 9 新 Round 采购 | 7 | 200 / 200 | 0 / 200 |
+| 11 双 Buyer 成交 A | 11 | 900 / 200 | 900 / 200 |
+| 16 completed | 15 | 900 / 200 | 900 / 200 |
+
+同利润时 A 的 seller_id 升序在前，只是稳定显示。Buyer 排行榜和 Seller 操作台显示相同 snapshot，商品推荐原 Listing 顺序不变。每 Tick 都出新榜，即使该 Tick 只有 Wait；Round Close 沿用末 Tick。旧场次未启用指标不会补造榜，请用迁移后 create-manual 的新场次体验。口径/字段/权限详见 [METRICS.md](METRICS.md)。
+
 ## API、inspect 和 PostgreSQL
 
 `/docs` 保留 OpenAPI。参与者使用 actor bearer；创建/rotate/run 的管理 bearer 仅由可信宿主掌握，不传给 Vue。端点与语义见 PLATFORM.md，新增本人列表为 `GET /api/v1/sessions/{sid}/receipts`。UI 不传 actor_id 切换权限，不能查询全量 journal。
@@ -87,6 +103,8 @@ A 在 T2 改价/描述后，同 Tick Buyer 看见 400 分、offer revision 2 / c
 ```powershell
 pwsh -File scripts/platform.ps1 inspect -SessionId '<session_id>'
 pwsh -File scripts/platform.ps1 recover -SessionId '<session_id>'
+pwsh -File scripts/platform.ps1 metrics -SessionId '<session_id>'
+pwsh -File scripts/platform.ps1 metrics -SessionId '<session_id>' -Format csv -OutDir '.local/metrics/market-01'
 ```
 
 `inspect` 是本机只读开发工具，读取一个 committed boundary，与 recover 共用源码、版本和经济摘要校验；输出 runtime/current publication、actor ID/role、pending/final receipts、Listings、订单、账户/库存、resolution 和 journal 计数/摘要、表行数。**不输出 token、token hash、私聊正文或原始 journal**。余额/订单等仍是宿主私有数据，不要把输出作为参与者 API 或普通用户下载。它不修改状态或推进 Wave。
@@ -102,6 +120,7 @@ pwsh -File scripts/platform.ps1 recover -SessionId '<session_id>'
 | `resolutions` | 原 Runner 裁决顺序 |
 | `journal_entries` | canonical transcript，含恢复所需 Listing/订单/资金/消息记录，不公开 |
 | `semantic_events` / `outbox_notices` | 事件与 audience / 无私密 payload 的发布失效通知 |
+| `leaderboard_snapshots` / `metric_snapshots` | 公开利润榜 / 宿主私有统计及历史映射；参与者不能读全表 |
 
 本架构没有第二套 SQL `orders` 经济表；订单保存在 Engine trace/本人投影，并由同版本 Engine 恢复核对。不要在 SQL 再写 purchase 或手动修余额。需要用 DB 客户端查看时只连本机配置库，在 `BEGIN READ ONLY` 中按 `session_id` 筛选必要列，禁止全表 dump/复制凭据；日常验收优先 inspect。
 
@@ -118,7 +137,7 @@ pwsh -File scripts/run.ps1 test-market
 
 `test-market` 要求配置 PG 已启动，8000/4173 空闲；会创建自己的持久场次，用本机 Edge 四个隔离 context 点击真实 UI，并重启配置的本机 PG。不要和其他工作同时使用该 PG；结束清理自有 API/preview/browser，最后自行 pg-stop。默认产物写 `.local/verification/market/<timestamp>/`，不覆盖历史验收。需要保存本任务证据可加 `-EvidenceDir docs/verification/<任务编号>`；最新结果见 [收口验收](verification/SB-CONSOLIDATE-001/README.md)，[SB-E2E-001 证据](verification/SB-E2E-001/README.md) 保留原样。历史 demo 自动化是单独回归，不作为真实 E2E 证据。
 
-当前仍是 TEST 规则：有限供应、即时采购/结算、共享库存、整数分报价、seeded resolver、既有批次预算和失败传播。**失败传播语义后续需正式确认**。本轮没有正式排行榜/推荐/奖励（排行榜入口只展示公开商家，统计为未发布）、消费者模型、物流/退款/税费、真实模型、人类实验协议、WebSocket/SSE 或正式身份系统。
+当前仍是 TEST 规则：有限供应、即时采购/结算、共享库存、整数分报价、seeded resolver、既有批次预算和失败传播。**失败传播语义后续需正式确认**。已上线的是 Development Metric 利润榜；没有正式评分/推荐/奖励、消费者模型、物流/退款/税费、真实模型、人类实验协议、WebSocket/SSE 或正式身份系统。
 
 网络适配器的五页 DTO 只做授权数据展示：`Product.id` 在 UI 中映射 Listing ID；不推断库存/钱/报价合法性。消息和订单显示 Engine Step；库存、价格和余额以已提交观察为准；封面为明确标注的中性示意，不用演示商品数据补齐真实市场。
 

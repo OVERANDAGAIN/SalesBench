@@ -12,6 +12,7 @@ class CreateSession(BaseModel):
     session_id: Identifier
     setup: dict
     market_config: dict = Field(default_factory=dict)
+    metrics_policy: dict = Field(default_factory=dict)
 
 
 class SubmitBatch(BaseModel):

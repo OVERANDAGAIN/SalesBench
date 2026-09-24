@@ -35,7 +35,7 @@ def admin(request: Request, supplied: Annotated[str, Depends(token)]):
 
 @router.post("/sessions", dependencies=[Depends(admin)])
 def create_session(body: CreateSession, market: Annotated[MarketService, Depends(service)]):
-    return market.create(body.session_id, body.setup, body.market_config)
+    return market.create(body.session_id, body.setup, body.market_config, body.metrics_policy)
 
 
 @router.post("/sessions/{session_id}/bindings/rotate", dependencies=[Depends(admin)])
@@ -79,3 +79,17 @@ def notifications(session_id: str, supplied: Annotated[str, Depends(token)], mar
 @router.post("/sessions/{session_id}/run", dependencies=[Depends(admin)])
 def run_ready(session_id: str, market: Annotated[MarketService, Depends(service)]):
     return market.run_ready(session_id)
+
+
+@router.get("/admin/sessions/{session_id}/metrics", dependencies=[Depends(admin)],
+            description="Trusted researcher only: committed development metrics, no tokens, private message text or raw journal. Not a participant API.")
+def metrics(session_id: str, market: Annotated[MarketService, Depends(service)],
+            publication_version: Annotated[int | None, Field(ge=0)] = None):
+    return market.metrics(session_id, publication_version=publication_version)
+
+
+@router.get("/admin/sessions/{session_id}/leaderboard", dependencies=[Depends(admin)],
+            description="Trusted host audit of public leaderboard history and publication mapping. Development Metric, not a benchmark score.")
+def leaderboard(session_id: str, market: Annotated[MarketService, Depends(service)],
+                publication_version: Annotated[int | None, Field(ge=0)] = None):
+    return market.leaderboard(session_id, publication_version=publication_version)

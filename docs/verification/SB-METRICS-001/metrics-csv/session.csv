@@ -1,0 +1,2 @@
+﻿status,session_id,tick_count,current_tick,total_orders,current_round,failed_actions,ranking_policy,skipped_actions,total_gmv_cents,total_units_sold,publication_count,succeeded_actions,invalid_batch_count,public_message_count,metric_schema_version,private_message_count,technical_failure_count
+completed,manual-67b69526cc514dcc9d74fbc0fd354454,6,3,4,2,1,dev_cash_profit_v1,0,1700,4,17,32,0,2,sb-metrics-v1,2,0

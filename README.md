@@ -2,7 +2,7 @@
 
 SalesBench 是一个本地可持久运行的多角色市场实验框架：Vue/H5 Buyer 与 Seller → FastAPI / MarketService → Runner → Engine，PostgreSQL 保存已提交的意图、回执、授权投影与恢复记录。尚未接真实 LLM 或正式 Consumer Model / Seller Policy，当前经济行为明确属于 TEST 规则。
 
-当前收口任务 **SB-CONSOLIDATE-001**，执行端 5070，分支 **`feat/sb-core-skeleton`**。完整框架在该任务分支；`main` 保留早期 UI 验收基线，没有自动合并。接手前先 fetch，核对分支/HEAD/工作区与 [最新 handoff](docs/handoffs/SB-CONSOLIDATE-001.md)，保留陌生修改。
+当前任务 **SB-METRICS-001**，执行端 5070，分支 **`feat/sb-core-skeleton`**。已接入持久化开发利润榜与宿主研究指标；不是正式 benchmark 评分。完整框架在该任务分支；`main` 保留早期 UI 验收基线，没有自动合并。接手前先 fetch，核对分支/HEAD/工作区与 [最新 handoff](docs/handoffs/SB-METRICS-001.md)，保留陌生修改。
 
 ## 先看什么
 
@@ -10,7 +10,8 @@ SalesBench 是一个本地可持久运行的多角色市场实验框架：Vue/H5
 - [环境与从零配置](docs/ENVIRONMENT.md)：各机独立工具/依赖/PG、常用命令、停止方式。
 - [四角色手工市场](docs/MANUAL_MARKET.md)：创建场次、绑定四个窗口、逐 Wave 操作及 inspect。
 - [当前接口](docs/INTERFACES.md)、[Engine](docs/ENGINE.md)、[Runner](docs/RUNNER.md)、[Platform](docs/PLATFORM.md)：各层技术契约。
-- [计划](docs/PLAN.md)、[开发约定](AGENTS.md)、[本次实测证据](docs/verification/SB-CONSOLIDATE-001/README.md)。历史只需按需查 handoff，无需聊天记录。
+- [利润榜与 Metrics](docs/METRICS.md)：开发口径、Tick Close 版本、宿主 API/JSON/CSV 与历史兼容边界。
+- [计划](docs/PLAN.md)、[开发约定](AGENTS.md)、[本次实测证据](docs/verification/SB-METRICS-001/README.md)。历史只需按需查 handoff，无需聊天记录。
 
 ## 本机启动
 
@@ -18,6 +19,7 @@ SalesBench 是一个本地可持久运行的多角色市场实验框架：Vue/H5
 
 ```powershell
 pwsh -File scripts/platform.ps1 pg-start
+pwsh -File scripts/platform.ps1 migrate  # 升级现有库，保留旧场次
 pwsh -File scripts/platform.ps1 create-manual
 ```
 
@@ -37,6 +39,7 @@ API 文档 http://127.0.0.1:8000/docs 。`/health` 仅说明 API 进程响应，
 
 ```powershell
 pwsh -File scripts/platform.ps1 inspect -SessionId '<session_id>'
+pwsh -File scripts/platform.ps1 metrics -SessionId '<session_id>'
 # 前后端终端 Ctrl+C 后，仅停止自己使用的开发 PG：
 pwsh -File scripts/platform.ps1 pg-stop
 ```

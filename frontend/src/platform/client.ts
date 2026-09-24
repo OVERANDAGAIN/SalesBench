@@ -10,6 +10,8 @@ const explanations: Record<string, string> = {
   OUT_OF_STOCK: '库存不足，本次购买未成交。', INSUFFICIENT_FUNDS: '资金不足，本次操作未完成。',
   COMMIT_UNKNOWN: '提交结果未知。请查询或用原请求重试，勿创建替代请求。',
   NETWORK_UNAVAILABLE: '无法连接市场服务。保留草稿和原请求，未切换为本地演示。',
+  METRICS_NOT_READY: '已提交版本的指标正在恢复，请稍后刷新；不会显示不匹配的榜单。',
+  METRICS_INCONSISTENT: '指标一致性检查失败，请由可信宿主检查；未替换为推测的利润。',
   INVALID_ACTOR_BINDING: '场次或角色凭据无效，请重新绑定。', AUTHENTICATION_REQUIRED: '需要有效角色凭据。',
   OPPORTUNITY_ALREADY_SUBMITTED: '本机会已经提交，请查看本人回执。', OPPORTUNITY_NOT_CURRENT: '当前没有该行动机会。',
   ACTION_ID_CONFLICT: '请求 ID 与原内容冲突，请保留原请求并检查回执。', SESSION_TERMINAL: '场次已结束，不能再提交。',

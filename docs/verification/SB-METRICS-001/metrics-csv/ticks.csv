@@ -1,0 +1,7 @@
+﻿tick_index,round_index,orders_count,sales_revenue_cents,source_publication_version
+1,1,1,300,3
+2,1,1,500,5
+3,1,0,0,7
+1,2,2,900,11
+2,2,0,0,13
+3,2,0,0,15

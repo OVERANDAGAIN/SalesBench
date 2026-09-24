@@ -6,7 +6,7 @@ export interface Merchant {
   id: string; name: string; initial: string; color: string; tag: string
   description: string; pitch: string; featuredProductId: string
 }
-export interface LeaderboardRow extends Merchant { rank: number | null; revenueCents: number | null; sold: number | null }
+export interface LeaderboardRow extends Merchant { rank: number | null; revenueCents: number | null; sold: number | null; profitCents?: number; previousRank?: number | null }
 export interface Product {
   id: string; merchantId: string; name: string; variant: string; category: string
   priceCents: number; stock: number; imageUrl: string; specs: string[]; description: string
@@ -34,7 +34,7 @@ interface ObservationBase {
   sessionId: string; revision: number; actor: Actor; merchants: Merchant[]
 }
 export type Observation = ObservationBase & (
-  | { view: 'leaderboard'; leaderboard: LeaderboardRow[] }
+  | { view: 'leaderboard'; leaderboard: LeaderboardRow[]; leaderboardSnapshot?: LeaderboardSnapshot | null }
   | { view: 'products'; products: Product[] }
   | { view: 'product'; product: Product }
   | { view: 'public'; merchantId: string; products: Product[]; messages: Message[] }
@@ -68,3 +68,4 @@ export interface BuyerService {
   getReceipt(actionId: string): Promise<Receipt | null>
   subscribe(listener: (event: ChangeEvent) => void): () => void
 }
+import type { LeaderboardSnapshot } from '../platform/types'

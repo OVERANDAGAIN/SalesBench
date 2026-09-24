@@ -23,7 +23,10 @@ export function mapBuyer(raw: MarketObservation, query: Parameters<BuyerService[
   const base = { ok: true as const, schemaVersion: 'sb-platform-v1' as const, mode: 'network' as const,
     sessionId: raw.session_id, revision: raw.published_version,
     actor: { ...raw.state.own.actor, balanceCents: raw.state.own.account.balance_cents }, merchants }
-  if (query.view === 'leaderboard') return { ...base, view: query.view, leaderboard: merchants.map(m => ({ ...m, rank: null, revenueCents: null, sold: null })) }
+  if (query.view === 'leaderboard') return { ...base, view: query.view, leaderboardSnapshot: raw.leaderboard,
+    leaderboard: raw.leaderboard ? raw.leaderboard.rows.map(row => ({ ...merchants.find(m => m.id === row.seller_id)!,
+      name: row.display_name, rank: row.current_rank, previousRank: row.previous_rank, profitCents: row.dev_profit_cents,
+      revenueCents: null, sold: null })) : merchants.map(m => ({ ...m, rank: null, revenueCents: null, sold: null })) }
   if (query.view === 'products') return { ...base, view: query.view, products: products.filter(p => !query.merchantId || p.merchantId === query.merchantId) }
   if (query.view === 'product') {
     const selected = products.find(p => p.id === query.productId)
@@ -78,6 +81,6 @@ export function createNetworkBuyerService(client: MarketClient): NetworkBuyerSer
     async submitBatch() { await client.submit(); return client.state.lastReceipt },
     getReceipt(requestId) { return client.getReceipt(requestId) },
     subscribe(listener) { return client.subscribe(() => { if (client.state.observation) listener({ sessionId: client.state.observation.session_id,
-      revision: client.state.observation.published_version, topics: ['products', 'account', 'orders', 'messages'] }) }) },
+      revision: client.state.observation.published_version, topics: ['leaderboard', 'products', 'account', 'orders', 'messages'] }) }) },
   }
 }

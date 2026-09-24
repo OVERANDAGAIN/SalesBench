@@ -1,0 +1,14 @@
+{
+  "session_id": "manual-67b69526cc514dcc9d74fbc0fd354454",
+  "metric_schema_version": "sb-metrics-v1",
+  "policy": {
+    "refresh": "tick_close",
+    "policy_id": "dev_cash_profit_v1",
+    "policy_version": 1,
+    "calculator_digest": "46dc6c51adcc4baf67993cd22e712308c4b4de335a2004db4b59d7a6edd10cc3",
+    "metric_schema_version": "sb-metrics-v1"
+  },
+  "source_publication_version": 16,
+  "consistency_errors": [],
+  "csv_text_safety": "Spreadsheet formula-leading text is apostrophe-prefixed; numeric negative profits are unchanged."
+}

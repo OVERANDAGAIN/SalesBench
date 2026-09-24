@@ -63,6 +63,7 @@ Backend 的锁定依赖以 editable path 引用 `../engine`；不需要把 Engin
 ```powershell
 pwsh -File scripts/platform.ps1 pg-status
 pwsh -File scripts/platform.ps1 pg-start  # 仅在未运行时
+pwsh -File scripts/platform.ps1 migrate  # SB-METRICS-001 显式升级，保留旧场次
 pwsh -File scripts/platform.ps1 create-manual  # 需要新场次时；不重置已有场次
 ```
 
@@ -85,6 +86,8 @@ pwsh -File scripts/platform.ps1 create-manual  # 需要新场次时；不重置�
 | 历史演示五页回归 | `pwsh -File scripts/run.ps1 test-browser` |
 | 只读宿主检查 | `pwsh -File scripts/platform.ps1 inspect -SessionId '<sid>'` |
 | 只读重放验证 | `pwsh -File scripts/platform.ps1 recover -SessionId '<sid>'` |
+| 宿主指标 / 默认 JSON | `pwsh -File scripts/platform.ps1 metrics -SessionId '<sid>'` |
+| CSV 导出（新私有目录） | `pwsh -File scripts/platform.ps1 metrics -SessionId '<sid>' -Format csv -OutDir '.local/metrics/run-01'` |
 
 `check` 顺序执行并在第一次失败时退出；要求依赖已安装、PG 已启动/迁移、8000/4173/5173 空闲。它不安装工具、不偷偷跳过 DB 测试。`test-market` 创建自己的持久场次，用四个隔离浏览器 context 操作真实生产 Vue/API/PG，**实际重启配置的开发 PG**。不要在其他任务使用该 PG 时执行；测试清理自己的 API/preview/browser，PG 留给调用方显式停止。
 
@@ -102,3 +105,4 @@ pwsh -File scripts/platform.ps1 create-manual  # 需要新场次时；不重置�
 - 恢复源码不匹配：检出创建该 session 的对应 Engine 版本；禁止绕过摘要检查或把 snapshot 当恢复数据。
 - 工具/依赖不匹配：核对本机配置与锁文件，不更新锁文件掩盖环境问题。
 - PG/API 重启：保留同 session 和 token，先 PG 后 API；没有自动恢复已损坏数据、备份或 HA 保证。
+- 旧场次榜单未启用：sb_metrics_001 不补造历史，迁移后 create-manual 建新场次即可。METRICS_POLICY_MISMATCH 必须核对创建该场次的计算器版本，不静默替换口径。宿主指标/导出含私有财务，普通材料留 `.local`，见 METRICS.md。

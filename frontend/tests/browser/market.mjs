@@ -1,7 +1,7 @@
 // Real production Vue, four isolated browser contexts, real HTTP + PostgreSQL.
 // No route mocking, DOM state injection, direct economic API calls or token logging.
 import assert from 'node:assert/strict'
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile, cp } from 'node:fs/promises'
 import { spawn, spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
@@ -25,8 +25,30 @@ async function available(port) { await new Promise((resolve, reject) => { const 
 await available(8000); await available(4173)
 const created = JSON.parse(platformCommand('create-manual'))
 await writeFile(path.join(local, 'browser-session.json'), JSON.stringify(created, null, 2))
-const secrets = [platform.admin_token, ...await Promise.all(created.actors.map(async actor => (await readJSON(path.join(created.binding_directory, actor + '.json'))).actor_token))]
+const bindings = Object.fromEntries(await Promise.all(created.actors.map(async actor => [actor, await readJSON(path.join(created.binding_directory, actor + '.json'))])))
+const secrets = [platform.admin_token, ...Object.values(bindings).map(binding => binding.actor_token)]
 const steps = [], network = new Map(), errors = [], pages = {}
+const rankingTrace = []
+async function getApi(suffix, token, admin = false) {
+  const response = await fetch(`http://127.0.0.1:8000/api/v1/${admin ? 'admin/' : ''}sessions/${created.session_id}/${suffix}`, { headers: { Authorization: `Bearer ${token}` } })
+  assert.equal(response.status, 200, `Read ${suffix} must succeed`)
+  return response.json()
+}
+const hostMetrics = () => getApi('metrics', platform.admin_token, true)
+async function rankings(publication, source, profits) {
+  const observations = await Promise.all(created.actors.map(actor => getApi('observation', bindings[actor].actor_token)))
+  const board = observations[0].leaderboard
+  assert.equal(board.source_publication_version, source)
+  assert.deepEqual(board.rows.map(row => row.dev_profit_cents), profits)
+  for (const observation of observations) {
+    assert.equal(observation.published_version, publication)
+    assert.deepEqual(observation.leaderboard, board)
+    assert(!JSON.stringify(observation).includes('cumulative_procurement_spend_cents'))
+  }
+  assert.deepEqual(Object.keys(board.rows[0]).sort(), ['seller_id', 'display_name', 'current_rank', 'previous_rank', 'dev_profit_cents'].sort())
+  rankingTrace.push({ publication, source, snapshot_id: board.leaderboard_snapshot_id, rows: board.rows })
+  return board
+}
 let api, preview, browser
 async function waitFor(work, label, attempts = 100) { for (let i = 0; i < attempts; i++) { if (await work()) return; await new Promise(r => setTimeout(r, 150)) } throw new Error(`Timed out: ${label}`) }
 async function stop(child) {
@@ -105,18 +127,29 @@ try {
     assert((await fetch('http://127.0.0.1:8000/docs')).ok)
     const openapi = await (await fetch('http://127.0.0.1:8000/openapi.json')).json()
     assert(openapi.paths['/api/v1/sessions/{session_id}/actions'])
+    assert(openapi.paths['/api/v1/admin/sessions/{session_id}/metrics'])
+    const initial = await rankings(0, 0, [0, 0])
+    assert.deepEqual(initial.rows.map(row => row.seller_id), ['seller-a', 'seller-b'])
+    assert(initial.rows.every(row => row.previous_rank === null))
+    for (const endpoint of ['metrics', 'leaderboard']) {
+      const denied = await fetch(`http://127.0.0.1:8000/api/v1/admin/sessions/${created.session_id}/${endpoint}`, { headers: { Authorization: `Bearer ${bindings['buyer-1'].actor_token}` } })
+      assert.equal(denied.status, 403)
+    }
     await shot(a, 'seller-procurement')
   })
   await check('Round procurement waits for both Sellers', async () => {
     await addSeller(a, 'procure', { '采购报价': 'cups', '采购数量': 1 }); await submit(a)
     await a.getByText('本人已提交', { exact: false }).waitFor(); await version(one, 0)
     await addSeller(b, 'procure', { '采购报价': 'cups', '采购数量': 3 }); await submit(b); await allVersion(1)
+    await rankings(1, 0, [0, 0])
+    assert.deepEqual((await hostMetrics()).sellers.map(seller => seller.dev_profit_cents), [-100, -300])
   })
   await check('Seller publication only after both ordered batches; Buyers see Listings', async () => {
     await addSeller(a, 'create_listing', { 'Listing ID': 'cup', 'Product ID': 'cup', '售价（整数分）': 300, '销售描述': 'Seller A 首发陶瓷杯' }); await submit(a)
     await version(one, 1)
     await addSeller(b, 'create_listing', { 'Listing ID': 'cup', 'Product ID': 'cup', '售价（整数分）': 500, '销售描述': 'Seller B 现货陶瓷杯' }); await submit(b); await allVersion(2)
     await nav(one, '商品推荐'); assert.equal(await one.locator('.product-card').count(), 2)
+    await rankings(2, 0, [0, 0])
     await shot(one, 'buyer-products')
   })
   await check('public + private + purchase batch is pending until other Buyer submits', async () => {
@@ -126,11 +159,21 @@ try {
     await buy(two, 'seller-a/cup')
     await submit(one); await one.getByText('本人已提交', { exact: false }).waitFor()
     await version(two, 2); await shot(one, 'buyer-pending')
+    await rankings(2, 0, [0, 0])
+    assert.equal((await hostMetrics()).summary.total_orders, 0)
     await submit(two); await allVersion(3)
     const report = JSON.parse(platformCommand('inspect', ['-SessionId', created.session_id]))
     assert.equal(report.orders.length, 1)
     assert(report.receipts.some(r => r.outcome_codes.includes('OUT_OF_STOCK')))
     await shot(pages[report.orders[0].buyer_id === 'buyer-1' ? 'buyer-2' : 'buyer-1'], 'buyer-failed-purchase')
+    const board = await rankings(3, 3, [200, -300])
+    await nav(one, '排行榜')
+    assert.equal(await one.getByTestId('leaderboard-context').getAttribute('data-snapshot-id'), board.leaderboard_snapshot_id)
+    assert((await one.locator('[data-seller-id="seller-b"]').textContent()).includes('-3.00'))
+    assert.equal(await a.getByTestId('leaderboard-context').getAttribute('data-snapshot-id'), board.leaderboard_snapshot_id)
+    await shot(one, 'buyer-profit-negative'); await shot(a, 'seller-profit-negative')
+    await one.reload(); await version(one, 3); await nav(one, '排行榜')
+    assert.equal(await one.getByTestId('leaderboard-context').getAttribute('data-snapshot-id'), board.leaderboard_snapshot_id)
   })
   await check('next Tick Seller feedback and private isolation; price/content visible to same Tick Buyers', async () => {
     await a.getByText('仅 Buyer 1 与 Seller A 可见的私聊', { exact: true }).waitFor()
@@ -140,6 +183,7 @@ try {
     await addSeller(a, 'description', { 'Listing ID': 'cup', '销售描述': '下一 Tick 已更新销售描述' })
     await addSeller(a, 'send_public', { 'Seller 消息内容': '可以清洗，这是 Seller A 的公开回复' }); await submit(a)
     await addSeller(b, 'send_private', { '私人消息接收者': 'buyer-2', 'Seller 消息内容': '仅 Buyer 2 与 Seller B 可见的回复' }); await submit(b); await allVersion(4)
+    await rankings(4, 3, [200, -300])
     await nav(one, '商品推荐')
     const card = one.locator('.product-card').filter({ has: one.locator('.variant', { hasText: 'seller-a/cup' }) })
     assert((await card.textContent()).includes('4'))
@@ -157,6 +201,10 @@ try {
     await buy(one, 'seller-b/cup'); await submit(one)
     await nav(two, '商品推荐'); await two.locator('.product-card').first().getByRole('button', { name: '查看陶瓷杯详情', exact: true }).click()
     await two.getByRole('button', { name: '暂不购买', exact: true }).click(); await submit(two); await allVersion(5)
+    const tied = await rankings(5, 5, [200, 200])
+    assert.deepEqual(tied.rows.map(row => row.seller_id), ['seller-a', 'seller-b'])
+    await nav(one, '商品推荐')
+    assert.deepEqual(await one.locator('.product-card .variant').allTextContents(), ['seller-a/cup', 'seller-b/cup'])
     await addSeller(a, 'active', { 'Listing ID': 'cup', '在售状态': 'false' }); await addSeller(a, 'active', { '在售状态': 'true' }); await submit(a)
     await waitAction(b); await allVersion(6)
     await waitAction(one); await waitAction(two); await allVersion(8)
@@ -165,6 +213,8 @@ try {
     await nav(one, '我的'); await shot(one, 'buyer-account')
     await one.reload(); await version(one, 8); await nav(one, '我的')
     const before = JSON.parse(platformCommand('inspect', ['-SessionId', created.session_id]))
+    const metricsBefore = await hostMetrics()
+    await rankings(8, 7, [200, 200])
     await stop(api); api = null
     platformCommand('pg-stop')
     await one.getByText('连接中断 · 数据可能过期', { exact: true }).waitFor()
@@ -174,11 +224,16 @@ try {
     const after = JSON.parse(platformCommand('inspect', ['-SessionId', created.session_id]))
     assert.equal(before.journal.state_digest, after.journal.state_digest)
     assert.deepEqual(before.orders, after.orders)
+    assert.deepEqual(await hostMetrics(), metricsBefore)
+    await rankings(8, 7, [200, 200])
     await addSeller(a, 'procure', { '采购数量': 2 }); await submit(a); await waitAction(b); await allVersion(9)
+    await rankings(9, 7, [200, 200])
+    assert.deepEqual((await hostMetrics()).sellers.map(seller => seller.dev_profit_cents), [0, 200])
   })
   await check('post-restart Round continues; two Buyers consume available shared stock', async () => {
     await addSeller(a, 'price', { '售价（整数分）': 450 }); await submit(a); await waitAction(b); await allVersion(10)
     await buy(one, 'seller-a/cup'); await buy(two, 'seller-a/cup'); await submit(one); await submit(two); await allVersion(11)
+    await rankings(11, 11, [900, 200])
     for (const [sellerVersion, buyerVersion] of [[12, 13], [14, 16]]) {
       await waitAction(a); await waitAction(b); await allVersion(sellerVersion)
       await waitAction(one); await waitAction(two); await allVersion(buyerVersion)
@@ -187,6 +242,22 @@ try {
   await check('five Buyer pages, Seller final state, H5 layout and PostgreSQL inspection', async () => {
     for (const [label, file] of [['排行榜', 'buyer-ranking'], ['我的', 'buyer-final-account']]) { await nav(one, label); await shot(one, file) }
     await shot(a, 'seller-final')
+    const finalBoard = await rankings(16, 15, [900, 200])
+    const metrics = await hostMetrics()
+    assert.equal(metrics.summary.total_gmv_cents, 1700)
+    assert.deepEqual(metrics.sellers.map(s => [s.cumulative_sales_revenue_cents, s.cumulative_procurement_spend_cents, s.dev_profit_cents]), [[1200, 300, 900], [500, 300, 200]])
+    assert.deepEqual(JSON.parse(platformCommand('metrics', ['-SessionId', created.session_id])), metrics)
+    assert.deepEqual((await getApi('leaderboard?publication_version=1', platform.admin_token, true)).leaderboard.rows.map(row => row.dev_profit_cents), [0, 0])
+    for (const format of ['json', 'csv']) {
+      const directory = path.join(local, 'metrics-' + format)
+      platformCommand('metrics', ['-SessionId', created.session_id, '-Format', format, '-OutDir', directory])
+      // This scenario contains only fixed test identities/facts. Never copy binding or raw inspect files.
+      if (evidence !== local) await cp(directory, path.join(evidence, 'metrics-' + format), { recursive: true })
+    }
+    const exported = await readJSON(path.join(local, 'metrics-json/metrics.json'))
+    assert.deepEqual(exported, metrics)
+    assert(!secrets.some(secret => JSON.stringify(exported).includes(secret)))
+    assert(!JSON.stringify(exported).includes('仅 Buyer'))
     await one.setViewportSize({ width: 390, height: 844 }); await nav(one, '商品推荐')
     assert(await one.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'H5 horizontal overflow')
     await shot(one, 'h5-buyer-products')
@@ -200,6 +271,8 @@ try {
     const summary = { checkedAt: new Date().toISOString(), status: 'passed', session_id: created.session_id, browser: await browser.version(), steps,
       runtime: report.runtime, table_counts: report.table_counts, orders: report.orders, network: Object.fromEntries(network),
       state_digest: report.journal.state_digest, private_isolation: 'passed', browser_reload: 'passed', api_pg_restart: 'passed', credential_leaks: 0 }
+    summary.metrics = { policy: metrics.policy, summary: metrics.summary, ranking_trace: rankingTrace, final_snapshot_id: finalBoard.leaderboard_snapshot_id,
+      sellers: metrics.sellers, buyers: metrics.buyers, restart_unchanged: true, participant_admin_denied: true, recommendation_order_unchanged: true }
     await writeFile(path.join(evidence, 'results.json'), JSON.stringify(summary, null, 2) + '\n')
     await writeFile(path.join(local, 'inspect.json'), JSON.stringify(report, null, 2))
   })

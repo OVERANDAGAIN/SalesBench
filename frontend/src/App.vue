@@ -37,7 +37,7 @@ function info() { state.dialog = 'config' }
       <div v-if="state.loading" class="loading-status" role="status">{{ state.snapshot ? '正在更新…' : demoMode ? '正在读取演示数据…' : '正在读取市场数据…' }}</div>
       <div v-if="state.error" class="load-error panel" role="alert"><h2>暂时无法读取</h2><p>{{ state.error }}</p><button class="btn" :disabled="state.loading" @click="refresh">重新读取</button></div>
       <template v-if="!state.error && state.snapshot && state.snapshot.view === state.page">
-        <RankingPage v-if="state.snapshot.view === 'leaderboard'" :rows="state.snapshot.leaderboard" @navigate="navigate" @info="info" />
+        <RankingPage v-if="state.snapshot.view === 'leaderboard'" :rows="state.snapshot.leaderboard" :snapshot="state.snapshot.leaderboardSnapshot" @navigate="navigate" @info="info" />
         <ProductsPage v-else-if="state.snapshot.view === 'products'" :products="state.snapshot.products" :merchants="state.snapshot.merchants" :filter="state.filterMerchantId" @filter="navigate('products', $event)" @detail="openProduct($event)" @checkout="openProduct($event, 'checkout')" @discuss="navigate('public', $event)" @info="info" />
         <ChatPage v-else-if="state.snapshot.view === 'public' || state.snapshot.view === 'private'" :data="state.snapshot" :draft="draft" :sending="state.sending || state.loading" :error="state.messageError" @navigate="navigate" @detail="openProduct($event)" @draft="setDraft" @send="send" @info="info" />
         <AccountPage v-else-if="state.snapshot.view === 'me'" :actor="state.snapshot.actor" :account="state.snapshot.account" :orders="state.snapshot.orders" @browse="navigate('products')" @info="info" />

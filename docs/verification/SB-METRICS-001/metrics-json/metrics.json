@@ -1,0 +1,707 @@
+{
+  "buyers": [
+    {
+      "buyer_id": "buyer-1",
+      "display_name": "Buyer 1",
+      "orders_count": 3,
+      "units_bought": 3,
+      "public_messages_sent": 1,
+      "current_balance_cents": 750,
+      "failed_purchase_count": 0,
+      "initial_balance_cents": 2000,
+      "private_messages_sent": 1,
+      "cumulative_spend_cents": 1250
+    },
+    {
+      "buyer_id": "buyer-2",
+      "display_name": "Buyer 2",
+      "orders_count": 1,
+      "units_bought": 1,
+      "public_messages_sent": 0,
+      "current_balance_cents": 1550,
+      "failed_purchase_count": 1,
+      "initial_balance_cents": 2000,
+      "private_messages_sent": 0,
+      "cumulative_spend_cents": 450
+    }
+  ],
+  "policy": {
+    "refresh": "tick_close",
+    "policy_id": "dev_cash_profit_v1",
+    "policy_version": 1,
+    "calculator_digest": "46dc6c51adcc4baf67993cd22e712308c4b4de335a2004db4b59d7a6edd10cc3",
+    "metric_schema_version": "sb-metrics-v1"
+  },
+  "sellers": [
+    {
+      "seller_id": "seller-a",
+      "units_sold": 3,
+      "display_name": "Seller A",
+      "orders_count": 3,
+      "failed_actions": 0,
+      "units_procured": 3,
+      "skipped_actions": 0,
+      "dev_profit_cents": 900,
+      "current_cash_cents": 5900,
+      "initial_cash_cents": 5000,
+      "price_change_count": 2,
+      "successful_actions": 11,
+      "active_listing_count": 1,
+      "public_messages_sent": 1,
+      "private_messages_sent": 0,
+      "current_inventory_units": 0,
+      "cumulative_sales_revenue_cents": 1200,
+      "cumulative_procurement_spend_cents": 300
+    },
+    {
+      "seller_id": "seller-b",
+      "units_sold": 1,
+      "display_name": "Seller B",
+      "orders_count": 1,
+      "failed_actions": 0,
+      "units_procured": 3,
+      "skipped_actions": 0,
+      "dev_profit_cents": 200,
+      "current_cash_cents": 5200,
+      "initial_cash_cents": 5000,
+      "price_change_count": 0,
+      "successful_actions": 8,
+      "active_listing_count": 1,
+      "public_messages_sent": 0,
+      "private_messages_sent": 1,
+      "current_inventory_units": 2,
+      "cumulative_sales_revenue_cents": 500,
+      "cumulative_procurement_spend_cents": 300
+    }
+  ],
+  "summary": {
+    "status": "completed",
+    "session_id": "manual-67b69526cc514dcc9d74fbc0fd354454",
+    "tick_count": 6,
+    "current_tick": 3,
+    "total_orders": 4,
+    "current_round": 2,
+    "failed_actions": 1,
+    "ranking_policy": "dev_cash_profit_v1",
+    "skipped_actions": 0,
+    "total_gmv_cents": 1700,
+    "total_units_sold": 4,
+    "publication_count": 17,
+    "succeeded_actions": 32,
+    "invalid_batch_count": 0,
+    "public_message_count": 2,
+    "metric_schema_version": "sb-metrics-v1",
+    "private_message_count": 2,
+    "technical_failure_count": 0
+  },
+  "session_id": "manual-67b69526cc514dcc9d74fbc0fd354454",
+  "tick_history": [
+    {
+      "tick_index": 1,
+      "round_index": 1,
+      "orders_count": 1,
+      "sales_revenue_cents": 300,
+      "source_publication_version": 3
+    },
+    {
+      "tick_index": 2,
+      "round_index": 1,
+      "orders_count": 1,
+      "sales_revenue_cents": 500,
+      "source_publication_version": 5
+    },
+    {
+      "tick_index": 3,
+      "round_index": 1,
+      "orders_count": 0,
+      "sales_revenue_cents": 0,
+      "source_publication_version": 7
+    },
+    {
+      "tick_index": 1,
+      "round_index": 2,
+      "orders_count": 2,
+      "sales_revenue_cents": 900,
+      "source_publication_version": 11
+    },
+    {
+      "tick_index": 2,
+      "round_index": 2,
+      "orders_count": 0,
+      "sales_revenue_cents": 0,
+      "source_publication_version": 13
+    },
+    {
+      "tick_index": 3,
+      "round_index": 2,
+      "orders_count": 0,
+      "sales_revenue_cents": 0,
+      "source_publication_version": 15
+    }
+  ],
+  "price_trajectory": [
+    {
+      "tick": 1,
+      "wave": "SELLER_STRATEGY",
+      "round": 1,
+      "seller_id": "seller-a",
+      "listing_id": "seller-a/cup",
+      "offer_revision": 1,
+      "unit_price_cents": 300
+    },
+    {
+      "tick": 1,
+      "wave": "SELLER_STRATEGY",
+      "round": 1,
+      "seller_id": "seller-b",
+      "listing_id": "seller-b/cup",
+      "offer_revision": 1,
+      "unit_price_cents": 500
+    },
+    {
+      "tick": 2,
+      "wave": "SELLER_STRATEGY",
+      "round": 1,
+      "seller_id": "seller-a",
+      "listing_id": "seller-a/cup",
+      "offer_revision": 2,
+      "unit_price_cents": 400
+    },
+    {
+      "tick": 1,
+      "wave": "SELLER_STRATEGY",
+      "round": 2,
+      "seller_id": "seller-a",
+      "listing_id": "seller-a/cup",
+      "offer_revision": 5,
+      "unit_price_cents": 450
+    }
+  ],
+  "consistency_errors": [],
+  "economic_visibility": "published",
+  "source_state_digest": "588c21705cf500bf4d44d2bc82ffd120b0d1206feca8688e303bea6034604237",
+  "metric_schema_version": "sb-metrics-v1",
+  "source_transcript_count": 263,
+  "source_transcript_digest": "895377b110ef0f31a913868b386808af1bed1200eb164f6de14b7fb179a60b31",
+  "source_publication_version": 16,
+  "generated_from_committed_state": true,
+  "leaderboard": {
+    "rows": [
+      {
+        "seller_id": "seller-a",
+        "current_rank": 1,
+        "display_name": "Seller A",
+        "previous_rank": 1,
+        "dev_profit_cents": 900
+      },
+      {
+        "seller_id": "seller-b",
+        "current_rank": 2,
+        "display_name": "Seller B",
+        "previous_rank": 2,
+        "dev_profit_cents": 200
+      }
+    ],
+    "policy_id": "dev_cash_profit_v1",
+    "session_id": "manual-67b69526cc514dcc9d74fbc0fd354454",
+    "tick_index": 3,
+    "round_index": 2,
+    "policy_version": 1,
+    "refresh_policy": "tick_close",
+    "metric_schema_version": "sb-metrics-v1",
+    "leaderboard_snapshot_id": "lb-37e3a1557639554e7440a8c01975e972abc28b6e4ebf8389d13fc57141eac40a",
+    "source_publication_version": 15,
+    "generated_from_committed_state": true
+  },
+  "leaderboard_history": [
+    {
+      "rows": [
+        {
+          "seller_id": "seller-a",
+          "current_rank": 1,
+          "display_name": "Seller A",
+          "previous_rank": null,
+          "dev_profit_cents": 0
+        },
+        {
+          "seller_id": "seller-b",
+          "current_rank": 2,
+          "display_name": "Seller B",
+          "previous_rank": null,
+          "dev_profit_cents": 0
+        }
+      ],
+      "policy_id": "dev_cash_profit_v1",
+      "session_id": "manual-67b69526cc514dcc9d74fbc0fd354454",
+      "tick_index": 0,
+      "round_index": 0,
+      "policy_version": 1,
+      "refresh_policy": "tick_close",
+      "metric_schema_version": "sb-metrics-v1",
+      "leaderboard_snapshot_id": "lb-cc6022bc70ab9489b5ce9e7d724ecd1a60ff6d0c8e013da124881441d01312f9",
+      "source_publication_version": 0,
+      "generated_from_committed_state": true
+    },
+    {
+      "rows": [
+        {
+          "seller_id": "seller-a",
+          "current_rank": 1,
+          "display_name": "Seller A",
+          "previous_rank": 1,
+          "dev_profit_cents": 200
+        },
+        {
+          "seller_id": "seller-b",
+          "current_rank": 2,
+          "display_name": "Seller B",
+          "previous_rank": 2,
+          "dev_profit_cents": -300
+        }
+      ],
+      "policy_id": "dev_cash_profit_v1",
+      "session_id": "manual-67b69526cc514dcc9d74fbc0fd354454",
+      "tick_index": 1,
+      "round_index": 1,
+      "policy_version": 1,
+      "refresh_policy": "tick_close",
+      "metric_schema_version": "sb-metrics-v1",
+      "leaderboard_snapshot_id": "lb-583a607d9e4a34f23a41ddf8036e020422eeeeba6e8ec42f8b96d2694d9d2738",
+      "source_publication_version": 3,
+      "generated_from_committed_state": true
+    },
+    {
+      "rows": [
+        {
+          "seller_id": "seller-a",
+          "current_rank": 1,
+          "display_name": "Seller A",
+          "previous_rank": 1,
+          "dev_profit_cents": 200
+        },
+        {
+          "seller_id": "seller-b",
+          "current_rank": 2,
+          "display_name": "Seller B",
+          "previous_rank": 2,
+          "dev_profit_cents": 200
+        }
+      ],
+      "policy_id": "dev_cash_profit_v1",
+      "session_id": "manual-67b69526cc514dcc9d74fbc0fd354454",
+      "tick_index": 2,
+      "round_index": 1,
+      "policy_version": 1,
+      "refresh_policy": "tick_close",
+      "metric_schema_version": "sb-metrics-v1",
+      "leaderboard_snapshot_id": "lb-ffa3fc2de2878f17a15d714ccdad9540a34593d0d8dfb923f6a67b908fbd677d",
+      "source_publication_version": 5,
+      "generated_from_committed_state": true
+    },
+    {
+      "rows": [
+        {
+          "seller_id": "seller-a",
+          "current_rank": 1,
+          "display_name": "Seller A",
+          "previous_rank": 1,
+          "dev_profit_cents": 200
+        },
+        {
+          "seller_id": "seller-b",
+          "current_rank": 2,
+          "display_name": "Seller B",
+          "previous_rank": 2,
+          "dev_profit_cents": 200
+        }
+      ],
+      "policy_id": "dev_cash_profit_v1",
+      "session_id": "manual-67b69526cc514dcc9d74fbc0fd354454",
+      "tick_index": 3,
+      "round_index": 1,
+      "policy_version": 1,
+      "refresh_policy": "tick_close",
+      "metric_schema_version": "sb-metrics-v1",
+      "leaderboard_snapshot_id": "lb-de7e12deb3163736687644d94262866c5ead6ccda1bb9896c42d8763e9639e21",
+      "source_publication_version": 7,
+      "generated_from_committed_state": true
+    },
+    {
+      "rows": [
+        {
+          "seller_id": "seller-a",
+          "current_rank": 1,
+          "display_name": "Seller A",
+          "previous_rank": 1,
+          "dev_profit_cents": 900
+        },
+        {
+          "seller_id": "seller-b",
+          "current_rank": 2,
+          "display_name": "Seller B",
+          "previous_rank": 2,
+          "dev_profit_cents": 200
+        }
+      ],
+      "policy_id": "dev_cash_profit_v1",
+      "session_id": "manual-67b69526cc514dcc9d74fbc0fd354454",
+      "tick_index": 1,
+      "round_index": 2,
+      "policy_version": 1,
+      "refresh_policy": "tick_close",
+      "metric_schema_version": "sb-metrics-v1",
+      "leaderboard_snapshot_id": "lb-c9b14d6fa000fd7a836ae199708a3010e293172bd46bb0c6659c0fb64e7ea0b9",
+      "source_publication_version": 11,
+      "generated_from_committed_state": true
+    },
+    {
+      "rows": [
+        {
+          "seller_id": "seller-a",
+          "current_rank": 1,
+          "display_name": "Seller A",
+          "previous_rank": 1,
+          "dev_profit_cents": 900
+        },
+        {
+          "seller_id": "seller-b",
+          "current_rank": 2,
+          "display_name": "Seller B",
+          "previous_rank": 2,
+          "dev_profit_cents": 200
+        }
+      ],
+      "policy_id": "dev_cash_profit_v1",
+      "session_id": "manual-67b69526cc514dcc9d74fbc0fd354454",
+      "tick_index": 2,
+      "round_index": 2,
+      "policy_version": 1,
+      "refresh_policy": "tick_close",
+      "metric_schema_version": "sb-metrics-v1",
+      "leaderboard_snapshot_id": "lb-9add30a63b9e3479323cc2b472e1e0d7bd8b9ba42ffa43c5b630d9e8b62ca025",
+      "source_publication_version": 13,
+      "generated_from_committed_state": true
+    },
+    {
+      "rows": [
+        {
+          "seller_id": "seller-a",
+          "current_rank": 1,
+          "display_name": "Seller A",
+          "previous_rank": 1,
+          "dev_profit_cents": 900
+        },
+        {
+          "seller_id": "seller-b",
+          "current_rank": 2,
+          "display_name": "Seller B",
+          "previous_rank": 2,
+          "dev_profit_cents": 200
+        }
+      ],
+      "policy_id": "dev_cash_profit_v1",
+      "session_id": "manual-67b69526cc514dcc9d74fbc0fd354454",
+      "tick_index": 3,
+      "round_index": 2,
+      "policy_version": 1,
+      "refresh_policy": "tick_close",
+      "metric_schema_version": "sb-metrics-v1",
+      "leaderboard_snapshot_id": "lb-37e3a1557639554e7440a8c01975e972abc28b6e4ebf8389d13fc57141eac40a",
+      "source_publication_version": 15,
+      "generated_from_committed_state": true
+    }
+  ],
+  "publication_leaderboards": [
+    {
+      "publication_version": 0,
+      "transcript_count": 2,
+      "leaderboard_source_version": 0
+    },
+    {
+      "publication_version": 1,
+      "transcript_count": 19,
+      "leaderboard_source_version": 0
+    },
+    {
+      "publication_version": 2,
+      "transcript_count": 36,
+      "leaderboard_source_version": 0
+    },
+    {
+      "publication_version": 3,
+      "transcript_count": 58,
+      "leaderboard_source_version": 3
+    },
+    {
+      "publication_version": 4,
+      "transcript_count": 79,
+      "leaderboard_source_version": 3
+    },
+    {
+      "publication_version": 5,
+      "transcript_count": 97,
+      "leaderboard_source_version": 5
+    },
+    {
+      "publication_version": 6,
+      "transcript_count": 116,
+      "leaderboard_source_version": 5
+    },
+    {
+      "publication_version": 7,
+      "transcript_count": 134,
+      "leaderboard_source_version": 7
+    },
+    {
+      "publication_version": 8,
+      "transcript_count": 137,
+      "leaderboard_source_version": 7
+    },
+    {
+      "publication_version": 9,
+      "transcript_count": 154,
+      "leaderboard_source_version": 7
+    },
+    {
+      "publication_version": 10,
+      "transcript_count": 171,
+      "leaderboard_source_version": 7
+    },
+    {
+      "publication_version": 11,
+      "transcript_count": 189,
+      "leaderboard_source_version": 11
+    },
+    {
+      "publication_version": 12,
+      "transcript_count": 206,
+      "leaderboard_source_version": 11
+    },
+    {
+      "publication_version": 13,
+      "transcript_count": 224,
+      "leaderboard_source_version": 13
+    },
+    {
+      "publication_version": 14,
+      "transcript_count": 241,
+      "leaderboard_source_version": 13
+    },
+    {
+      "publication_version": 15,
+      "transcript_count": 259,
+      "leaderboard_source_version": 15
+    },
+    {
+      "publication_version": 16,
+      "transcript_count": 263,
+      "leaderboard_source_version": 15
+    }
+  ],
+  "profit_trajectory": [
+    {
+      "source_publication_version": 0,
+      "transcript_count": 2,
+      "seller_id": "seller-a",
+      "dev_profit_cents": 0
+    },
+    {
+      "source_publication_version": 0,
+      "transcript_count": 2,
+      "seller_id": "seller-b",
+      "dev_profit_cents": 0
+    },
+    {
+      "source_publication_version": 1,
+      "transcript_count": 19,
+      "seller_id": "seller-a",
+      "dev_profit_cents": -100
+    },
+    {
+      "source_publication_version": 1,
+      "transcript_count": 19,
+      "seller_id": "seller-b",
+      "dev_profit_cents": -300
+    },
+    {
+      "source_publication_version": 2,
+      "transcript_count": 36,
+      "seller_id": "seller-a",
+      "dev_profit_cents": -100
+    },
+    {
+      "source_publication_version": 2,
+      "transcript_count": 36,
+      "seller_id": "seller-b",
+      "dev_profit_cents": -300
+    },
+    {
+      "source_publication_version": 3,
+      "transcript_count": 58,
+      "seller_id": "seller-a",
+      "dev_profit_cents": 200
+    },
+    {
+      "source_publication_version": 3,
+      "transcript_count": 58,
+      "seller_id": "seller-b",
+      "dev_profit_cents": -300
+    },
+    {
+      "source_publication_version": 4,
+      "transcript_count": 79,
+      "seller_id": "seller-a",
+      "dev_profit_cents": 200
+    },
+    {
+      "source_publication_version": 4,
+      "transcript_count": 79,
+      "seller_id": "seller-b",
+      "dev_profit_cents": -300
+    },
+    {
+      "source_publication_version": 5,
+      "transcript_count": 97,
+      "seller_id": "seller-a",
+      "dev_profit_cents": 200
+    },
+    {
+      "source_publication_version": 5,
+      "transcript_count": 97,
+      "seller_id": "seller-b",
+      "dev_profit_cents": 200
+    },
+    {
+      "source_publication_version": 6,
+      "transcript_count": 116,
+      "seller_id": "seller-a",
+      "dev_profit_cents": 200
+    },
+    {
+      "source_publication_version": 6,
+      "transcript_count": 116,
+      "seller_id": "seller-b",
+      "dev_profit_cents": 200
+    },
+    {
+      "source_publication_version": 7,
+      "transcript_count": 134,
+      "seller_id": "seller-a",
+      "dev_profit_cents": 200
+    },
+    {
+      "source_publication_version": 7,
+      "transcript_count": 134,
+      "seller_id": "seller-b",
+      "dev_profit_cents": 200
+    },
+    {
+      "source_publication_version": 8,
+      "transcript_count": 137,
+      "seller_id": "seller-a",
+      "dev_profit_cents": 200
+    },
+    {
+      "source_publication_version": 8,
+      "transcript_count": 137,
+      "seller_id": "seller-b",
+      "dev_profit_cents": 200
+    },
+    {
+      "source_publication_version": 9,
+      "transcript_count": 154,
+      "seller_id": "seller-a",
+      "dev_profit_cents": 0
+    },
+    {
+      "source_publication_version": 9,
+      "transcript_count": 154,
+      "seller_id": "seller-b",
+      "dev_profit_cents": 200
+    },
+    {
+      "source_publication_version": 10,
+      "transcript_count": 171,
+      "seller_id": "seller-a",
+      "dev_profit_cents": 0
+    },
+    {
+      "source_publication_version": 10,
+      "transcript_count": 171,
+      "seller_id": "seller-b",
+      "dev_profit_cents": 200
+    },
+    {
+      "source_publication_version": 11,
+      "transcript_count": 189,
+      "seller_id": "seller-a",
+      "dev_profit_cents": 900
+    },
+    {
+      "source_publication_version": 11,
+      "transcript_count": 189,
+      "seller_id": "seller-b",
+      "dev_profit_cents": 200
+    },
+    {
+      "source_publication_version": 12,
+      "transcript_count": 206,
+      "seller_id": "seller-a",
+      "dev_profit_cents": 900
+    },
+    {
+      "source_publication_version": 12,
+      "transcript_count": 206,
+      "seller_id": "seller-b",
+      "dev_profit_cents": 200
+    },
+    {
+      "source_publication_version": 13,
+      "transcript_count": 224,
+      "seller_id": "seller-a",
+      "dev_profit_cents": 900
+    },
+    {
+      "source_publication_version": 13,
+      "transcript_count": 224,
+      "seller_id": "seller-b",
+      "dev_profit_cents": 200
+    },
+    {
+      "source_publication_version": 14,
+      "transcript_count": 241,
+      "seller_id": "seller-a",
+      "dev_profit_cents": 900
+    },
+    {
+      "source_publication_version": 14,
+      "transcript_count": 241,
+      "seller_id": "seller-b",
+      "dev_profit_cents": 200
+    },
+    {
+      "source_publication_version": 15,
+      "transcript_count": 259,
+      "seller_id": "seller-a",
+      "dev_profit_cents": 900
+    },
+    {
+      "source_publication_version": 15,
+      "transcript_count": 259,
+      "seller_id": "seller-b",
+      "dev_profit_cents": 200
+    },
+    {
+      "source_publication_version": 16,
+      "transcript_count": 263,
+      "seller_id": "seller-a",
+      "dev_profit_cents": 900
+    },
+    {
+      "source_publication_version": 16,
+      "transcript_count": 263,
+      "seller_id": "seller-b",
+      "dev_profit_cents": 200
+    }
+  ]
+}

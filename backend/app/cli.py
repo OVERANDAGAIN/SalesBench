@@ -82,8 +82,10 @@ def demo(service):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("task", choices=("init-db", "demo", "recover", "create-manual", "inspect"))
+    parser.add_argument("task", choices=("init-db", "demo", "recover", "create-manual", "inspect", "metrics"))
     parser.add_argument("--session-id")
+    parser.add_argument("--format", choices=("json", "csv"), default="json")
+    parser.add_argument("--out-dir", type=Path)
     args = parser.parse_args()
     url = os.environ["SALESBENCH_DATABASE_URL"]
     if args.task == "init-db":
@@ -95,6 +97,15 @@ def main():
         if args.task == "create-manual":
             from .manual import create_manual
             result = create_manual(service, Path(__file__).resolve().parents[2] / ".local/manual")
+        elif args.task == "metrics":
+            if not args.session_id:
+                parser.error("metrics requires --session-id")
+            if args.format == "csv" and args.out_dir is None:
+                parser.error("CSV export requires --out-dir (a new private local directory)")
+            result = service.metrics(args.session_id)
+            if args.out_dir is not None:
+                from .metric_exports import export_metrics
+                result = export_metrics(result, args.out_dir, args.format)
         elif args.task == "inspect":
             from .manual import inspect_market
             if not args.session_id:

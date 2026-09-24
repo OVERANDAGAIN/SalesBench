@@ -1,6 +1,6 @@
 # SalesBench 当前框架
 
-截至 SB-CONSOLIDATE-001（2026-09-24），项目已是可持久运行、可审计重放的本地多角色市场框架。Buyer/Seller Web 输入、HTTP 和未来 Agent 的接入点一致；经济行为仍是 TEST 规则，不等于已完成一个有正式消费者模型、策略和评价指标的 benchmark。
+截至 SB-METRICS-001（2026-09-24），项目已是可持久运行、可审计重放的本地多角色市场框架，包含开发利润榜与可信宿主研究指标。Buyer/Seller Web 输入、HTTP 和未来 Agent 的接入点一致；经济行为仍是 TEST 规则，不等于已完成一个有正式消费者模型、策略和评价指标的 benchmark。
 
 ## 主链与唯一职责
 
@@ -16,6 +16,8 @@ flowchart TD
   Runner -->|结构化动作| Engine[Engine: 经济状态与单动作裁决]
   Engine -->|结果与事件| Runner
   Runner -->|候选 journal / publication| Service
+  PG -->|已提交且通过恢复校验的事实| Metrics[Metrics: 唯一统计与榜单 policy]
+  Metrics -->|版本化指标/榜单映射| PG
 ```
 
 PostgreSQL 是耐久权威存储，**不是 purchase 执行层**。FastAPI/MarketService 先保存请求，收齐 Wave 后从 DB 已提交记录恢复 Runner/Engine，执行候选，再提交整个边界；参与者只读 DB 中已经提交的授权投影。不会先把候选发给页面、以后再补数据库。
@@ -26,7 +28,8 @@ PostgreSQL 是耐久权威存储，**不是 purchase 执行层**。FastAPI/Marke
 | `frontend/src/pages/`、`components/` | Buyer 五页、工程 Seller 操作台、Wave 与回执展示 | 正式消费者/经营策略、排名算法 |
 | `backend/app/api.py`、`contracts.py` | HTTP envelope、bearer 认证、OpenAPI | 调用 Engine 绕过 Wave |
 | `backend/app/service.py` | 会话绑定、持久幂等、收集、fencing、提交、恢复 | 另一套经济规则 |
-| `backend/app/persistence.py`、`migrations/` | SQLAlchemy 10 张业务表、显式 Alembic 迁移 | 独立 SQL 订单撮合或账户结算 |
+| `backend/app/persistence.py`、`migrations/` | SQLAlchemy 12 张应用表、显式 Alembic 迁移 | 独立 SQL 订单撮合或账户结算 |
+| `backend/app/metrics.py`、`metric_store.py` | committed facts 的唯一统计、版本化 policy/历史物化、公共榜单白名单 | 经济裁决、正式总分/reward、推荐算法 |
 | `engine/src/salesbench_engine/runner/` | 冻结观察、Driver 收集、批次、顺序、publish、journal/replay | 平台身份、DB 事务 |
 | `engine/src/salesbench_engine/` | Product/Offer/Inventory/Listing、权限、钱、订单/消息、revision、单动作原子性、step | UI、HTTP、数据库或真实模型调用 |
 | `backend/app/manual.py`、`cli.py` | 宿主创建场次、只读 inspect/recover、确定性 smoke | 参与者全量数据 API、正式管理后台 |
@@ -40,7 +43,8 @@ Backend 通过锁定的本地包依赖引用 Engine，不复制其源码。Engin
 3. 每个必需 actor 都提交后，平台 claim 新 fence，从 canonical transcript 恢复候选；SubmissionDriver 把持久意图交回原 Runner，不自动替缺席者 Wait。
 4. Runner 决定合法批次及执行次序；Engine 唯一裁决钱、库存、报价、消息权限。Buyer purchase 至多一笔且在尾部；跨 Listing 的共享库存仍按同一 seeded resolver 排序。
 5. 同事务落库 journal、action/batch receipt、resolution、事件、runtime、publication、授权 projection 和 outbox。DB COMMIT 即对外发布，无额外内存 publish 窗口。
-6. 客户端轮询通知/观察/本人 receipt。pending 不表示成交；断线/COMMIT_UNKNOWN 保留原 ID 与原 envelope，查 receipt，未知时也只重发原请求。
+6. 新场次在经济 COMMIT 后从 DB 已提交事实物化指标/榜单；若进程在间隙退出，读取时确定性补齐。观察通过同一 MVCC JOIN 读取精确版本；缺派生视图时有限重试或 503，不配错榜单。默认 Buyer Wave / Tick Close 刷榜，采购与 Seller Wave 沿用上一榜，细节见 [METRICS.md](METRICS.md)。
+7. 客户端轮询通知/观察/本人 receipt。pending 不表示成交；断线/COMMIT_UNKNOWN 保留原 ID 与原 envelope，查 receipt，未知时也只重发原请求。
 
 单动作失败不会部分改钱/库存。**整批并非全有或全无**：V1 保留成功前缀，业务失败后其余动作 skipped，记录原因；失败传播语义后续需正式确认。技术故障与策略 Wait 分离。
 
@@ -55,6 +59,7 @@ Backend 通过锁定的本地包依赖引用 Engine，不复制其源码。Engin
 | Wave / opportunity | 同角色基于同一已发布公共版本决策，私有观察各自授权；每 actor 一个有序批次 |
 | Engine step | 已正常关闭的 Round 数，从 0 开始；不是分钟、小时或某个模型返回 |
 | published_version | 正常 Wave / Round close 提交后增加；DB projection/runtime 与其一致 |
+| leaderboard source version | 实际生成公开榜单的 publication；默认 Tick Close 更新，中间 publication 保留映射 |
 | offer_revision | 实际改价或上下架增加；库存变化、同值赋值不增加 |
 | content_revision | 实际销售描述变化增加，与报价版本独立 |
 
@@ -72,14 +77,14 @@ Seller 在本 Tick 的修改对同 Tick Buyer 生效；Buyer 的本 Wave 消息�
 
 ## 已完成、未完成与 Known Issues
 
-已完成 Buyer UI 迁移、独立 Engine、Market Wave Runner、PostgreSQL 持久平台、真实 Buyer/Seller 多窗口 E2E。可采购、上架/调价/改描述/上下架、公开/私聊、购买/Wait、查看真实订单/余额、重连、跨进程幂等、重启恢复与宿主审计。
+已完成 Buyer UI 迁移、独立 Engine、Market Wave Runner、PostgreSQL 持久平台、真实 Buyer/Seller 多窗口 E2E。可采购、上架/调价/改描述/上下架、公开/私聊、购买/Wait、查看真实订单/余额、重连、跨进程幂等、重启恢复与宿主审计。新场次提供同版本开发利润榜，宿主可读/导出账户、采购、成交、动作及价格/利润/排名/Tick 历史；无私聊正文或 token 导出。
 
 | 分类 | 当前边界 / 缺口 |
 | --- | --- |
 | 工程能力 | 本地单 worker、小市场、完整历史重放；未做 checkpoint/归档、规模验证、HA、备份恢复演练、正式身份治理或公网部署。通知为 polling，无 WS/SSE |
 | 真实模型接入 | LLMDriver / ModelAdapter 接口及 fake adapter 测试已有；真实 provider、模型运行凭据、成本/配额及真实模型实验未接入 |
 | 研究组件 | Consumer Model、Seller/Supplier Policy 只有 scripted/test 实现；偏好、效用、策略、实验参数集与正式评价尚待研究设计 |
-| 未定研究机制 | 正式排行榜/推荐/奖励、供给再生、真实时间映射、物流/退款/佣金/税费未定；Engine 的 TEST 榜单不在当前 Runner 公共投影启用 |
+| 未定研究机制 | 正式评价/推荐/奖励、供给再生、真实时间映射、物流/退款/佣金/税费未定；当前公开榜为 dev_cash_profit_v1，不是正式指标；Engine 旧 TEST gross-sales 榜仍不在 Runner 投影启用 |
 | 真人实验 | Seller/Buyer 手工 UI 是工程输入；不是 HumanDriver profile、正式账户、招募/同意/实验分配与真人实验协议 |
 
 继续保留的限制：批次失败传播 Protocol Debt；未提交持续等待；源码不匹配的历史 trace 拒绝恢复，不能绕过 guard 升级；本机角色文件明文/sessionStorage 只适用于开发；私有 journal/inspect 仅供可信宿主，不能提供给参与者。经济 TEST 规则包括有限供应、即时交货与全额即时结算、共享库存，无完整履约机制。
@@ -88,6 +93,6 @@ Seller 在本 Tick 的修改对同 Tick Buyer 生效；Buyer 的本 Wave 消息�
 
 1. **明确最小研究 profile 与评价契约**：先确定比较什么、Consumer/Seller 的信息与行为假设、指标和批次失败传播的处理结论。保留当前协议基线，任何变更需显式版本和用户确认，避免把测试行为当研究结论。
 2. **受控真实 LLM adapter 小试**：复用同一 application boundary/Runner，以一个 provider 验证结构化输出、预算、取消/失败、模型记录与重放；先验证实验输入可信，再扩展模型矩阵，不复制经济规则。
-3. **可复现实验与数据交付**：固定已批准的 profile、seed、策略/模型配置与代码版本，形成重复运行、指标导出和访问权限明确的审计材料；用真实运行规模决定是否需要 checkpoint 或性能工程。
+3. **可复现实验与数据交付**：固定已批准的 profile、seed、策略/模型配置与代码版本，基于已有 Metrics/JSON/CSV 形成批量重复运行与统计分析；用真实运行规模决定是否需要 checkpoint 或性能工程。
 
 正式 HumanDriver/真人实验单独立项，不能把手工 E2E 直接改名为正式实验。上述里程碑均等待后续指令。

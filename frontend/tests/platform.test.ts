@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { MarketClient } from '../src/platform/client'
 import { mapBuyer, marketAction } from '../src/platform/buyer'
+import { rankChange } from '../src/domain/format'
 import type { BatchReceipt, BatchRequest, MarketObservation } from '../src/platform/types'
 
 function fixture() {
@@ -9,7 +10,7 @@ function fixture() {
   const state = { public: publicState, own, inbox: { ...own, messages: [{ id: 'private-1', channel: 'private' as const, author_id: 'seller-a', seller_id: 'seller-a', text: 'private text', step: 0, conversation_id: 'conversation' }] } }
   const wave = { name: 'BUYER_ACTION', role: 'buyer' as const, allowed_actions: ['send_public', 'send_private', 'purchase', 'wait'], max_actions: 3, max_messages: 2, max_purchases: 1 }
   const context = { round: 1, tick: 1, wave: 'BUYER_ACTION' }
-  const observation: MarketObservation = { schema_version: 'sb-platform-v1', session_id: 'test-market', actor_id: 'buyer-1', published_version: 2, state,
+  const observation: MarketObservation = { schema_version: 'sb-platform-v1', session_id: 'test-market', actor_id: 'buyer-1', published_version: 2, state, leaderboard: null,
     opportunity: { opportunity_id: 'a'.repeat(64), context, state, wave, procurement: null }, runtime: { status: 'awaiting_batches', runner_phase: 'publishing', published_version: 2, engine_step: 0, next_boundary: { context, wave } } }
   const saved = new Map<string, string>()
   const storage = { getItem: (key: string) => saved.get(key) ?? null, setItem: (key: string, value: string) => { saved.set(key, value) }, removeItem: (key: string) => { saved.delete(key) } }
@@ -37,6 +38,30 @@ function fixture() {
 const purchase = { type: 'purchase' as const, listing_id: 'seller-a/cup', quantity: 1, expected_unit_price_cents: 300, expected_offer_revision: 3 }
 
 describe('real platform transport and opportunity composition', () => {
+  it('displays server profit and rank order without computing profit or reordering products', () => {
+    const { observation } = fixture()
+    observation.state.public.sellers.push({ id: 'seller-b', name: 'Seller B' })
+    const other = structuredClone(observation.state.public.listings[0]!)
+    other.listing.id = 'seller-b/cup'; other.listing.seller_id = 'seller-b'; other.seller = { id: 'seller-b', name: 'Seller B' }
+    observation.state.public.listings.push(other)
+    observation.leaderboard = { leaderboard_snapshot_id: 'lb-verified', session_id: observation.session_id, source_publication_version: 3,
+      round_index: 1, tick_index: 1, policy_id: 'dev_cash_profit_v1', policy_version: 1, metric_schema_version: 'sb-metrics-v1',
+      refresh_policy: 'tick_close', generated_from_committed_state: true, rows: [
+        { seller_id: 'seller-b', display_name: 'Seller B', current_rank: 1, previous_rank: 2, dev_profit_cents: 200 },
+        { seller_id: 'seller-a', display_name: 'Seller A', current_rank: 2, previous_rank: 1, dev_profit_cents: -300 },
+      ] }
+    const ranking = mapBuyer(observation, { view: 'leaderboard' })
+    expect(ranking.view === 'leaderboard' && ranking.leaderboard.map(r => [r.id, r.profitCents, r.previousRank])).toEqual([
+      ['seller-b', 200, 2], ['seller-a', -300, 1],
+    ])
+    expect(ranking.view === 'leaderboard' && ranking.leaderboardSnapshot).toEqual(observation.leaderboard)
+    const products = mapBuyer(observation, { view: 'products' })
+    expect(products.view === 'products' && products.products.map(p => p.id)).toEqual(['seller-a/cup', 'seller-b/cup'])
+    expect(JSON.stringify(ranking)).not.toContain('cumulative_procurement_spend_cents')
+  })
+  it('formats rank movement as presentation only, including first snapshot and unchanged rank', () => {
+    expect([rankChange(1, null), rankChange(1, 1), rankChange(1, 2), rankChange(2, 1)]).toEqual(['首次发布', '持平', '↑ 1', '↓ 1'])
+  })
   it('maps only authorized information, Listing versions and logical time', () => {
     const { observation } = fixture()
     const products = mapBuyer(observation, { view: 'products' })

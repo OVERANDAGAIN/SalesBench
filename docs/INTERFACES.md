@@ -30,7 +30,9 @@
 | request / action ID | Web request_id 标识完整批次、支持跨进程重试；Runner action_id 标识批次内动作。两者均不决定购买顺序 |
 | receipt | pending / rejected / succeeded / failed / aborted；pending 只表示已持久接收，不表示成交。失败/skipped 原因原样展示 |
 | 通知 / subscribe | 当前使用持久 notification polling 再读取授权观察；失败 runtime 可能不增版本，因此同时轮询观察/回执 |
-| 排行榜 / 图片 | Runner 未发布排名/成交统计，界面明确显示未发布（null）；商品使用标注的中性示意图片，不注入演示商品 |
+| 排行榜 | observation 顶层 leaderboard 为公共持久快照；新场次默认 Tick Close 刷新 dev_cash_profit_v1，所有 actor 同 publication 共用。旧场次 NULL policy 保留 null，不补造历史。详情见 METRICS.md |
+| 宿主 Metrics | 管理 bearer 的 `/api/v1/admin/sessions/{sid}/metrics`、`/leaderboard`；actor token 403，Vue 不读取全场私有财务 |
+| 商品推荐 / 图片 | 原 public listings 顺序不随排名变化；商品使用标注的中性示意图片，不注入演示商品或推荐算法 |
 
 同 opportunity 的 Seller 都提交后才发布，Buyer 再读取同 Tick 新价。Buyer 消息/购买也先入草稿再整批提交。切页、筛选、关弹窗不是 Engine action；明确“不购买”会从草稿移除 purchase、保留消息，空批次才变为 Wait，仍须提交。未提交持续等待。
 
@@ -41,9 +43,10 @@
 - stale publication 为平台 rejected；PRICE_CHANGED / STALE_LISTING / OUT_OF_STOCK 等由 Engine 在 Wave 内裁决，最终 receipt 才判定经济结果。
 - 刷新/重新绑定从 server observation 与本人最近 50 个 receipts 恢复，pending 优先；列表不包含其他 actor 意图。失败网络明确离线，旧数据显示为可能过期。
 - admin token、完整 DB、journal、全场 inspect 从不提供给 Vue。actor token 不放 URL、普通日志、截图或 Git。
+- 指标与经济提交之间若短暂缺派生视图，服务器有限补齐重读；仍不可用为 METRICS_NOT_READY，不返回版本不匹配的榜单。指标一致性/源码策略错误 fail closed。receipt 幂等不受影响，不能将指标错误视为购买回滚。
 
 ## 仍需独立设计的边界
 
-正式 Agent provider/profile、Consumer Model / Seller Policy、正式用户身份与 HumanDriver、评价/排行榜/奖励、真实时间映射和履约仍未实现；不是网络 DTO 待补字段就能自动成立的功能。
+正式 Agent provider/profile、Consumer Model / Seller Policy、正式用户身份与 HumanDriver、正式评价/奖励、真实时间映射和履约仍未实现；开发利润榜不代表这些研究机制已经定案。
 
 **失败传播语义后续需正式确认**：当前 Runner 保留成功前缀，业务失败后跳过剩余动作，可能使失败消息阻止末尾 purchase。本轮不改变此规则。细节和当前保证见 [ARCHITECTURE.md](ARCHITECTURE.md)、RUNNER/PLATFORM。

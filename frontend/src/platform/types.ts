@@ -19,7 +19,13 @@ export interface Context { round: number; tick: number; wave: string }
 export interface Wave { name: string; role: 'seller' | 'buyer'; allowed_actions: string[]; max_actions: number; max_messages: number; max_purchases: number }
 export interface Opportunity { opportunity_id: string; context: Context; wave: Wave; state: AuthorizedState; procurement: OwnObservation | null }
 export interface Runtime { status: string; runner_phase: string; published_version: number; engine_step: number; next_boundary: { context: Context; wave: Wave | null } | null }
-export interface MarketObservation { schema_version: 'sb-platform-v1'; session_id: string; actor_id: string; published_version: number; state: AuthorizedState; opportunity: Opportunity | null; runtime: Runtime }
+export interface LeaderboardSnapshot {
+  leaderboard_snapshot_id: string; session_id: string; source_publication_version: number;
+  round_index: number; tick_index: number; policy_id: string; policy_version: number;
+  metric_schema_version: string; refresh_policy: 'tick_close' | 'round_close'; generated_from_committed_state: true;
+  rows: { seller_id: string; display_name: string; current_rank: number; previous_rank: number | null; dev_profit_cents: number }[];
+}
+export interface MarketObservation { schema_version: 'sb-platform-v1'; session_id: string; actor_id: string; published_version: number; state: AuthorizedState; opportunity: Opportunity | null; runtime: Runtime; leaderboard: LeaderboardSnapshot | null }
 export type MarketAction =
   | { type: 'procure'; offer_id: string; quantity: number; expected_unit_cost_cents: number }
   | { type: 'create_listing'; listing_id: string; product_id: string; unit_price_cents: number; description: string }

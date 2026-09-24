@@ -1,0 +1,144 @@
+Checking engine.ps1 test
+test_buyer_cannot_observe_procurement_costs_or_other_balances (test_domain.DomainTests.test_buyer_cannot_observe_procurement_costs_or_other_balances) ... ok
+test_invalid_initial_state_is_rejected (test_domain.DomainTests.test_invalid_initial_state_is_rejected) ... ok
+test_observation_and_snapshot_records_are_immutable (test_domain.DomainTests.test_observation_and_snapshot_records_are_immutable) ... ok
+test_ranking_is_explicitly_a_replaceable_test_rule (test_domain.DomainTests.test_ranking_is_explicitly_a_replaceable_test_rule) ... ok
+test_supplier_offer_does_not_make_inventory_or_listing (test_domain.DomainTests.test_supplier_offer_does_not_make_inventory_or_listing) ... ok
+test_unknown_actor_and_invalid_observation_fail_closed (test_domain.DomainTests.test_unknown_actor_and_invalid_observation_fail_closed) ... ok
+test_input_and_output_token_budgets_fail_before_any_wave_commit (test_drivers.DriverTests.test_input_and_output_token_budgets_fail_before_any_wave_commit) ... ok
+test_llm_request_contains_authorized_snapshot_schema_and_limits (test_drivers.DriverTests.test_llm_request_contains_authorized_snapshot_schema_and_limits) ... ok
+test_malformed_model_output_is_audited_invalid_batch_not_wait_or_technical_failure (test_drivers.DriverTests.test_malformed_model_output_is_audited_invalid_batch_not_wait_or_technical_failure) ... ok
+test_delayed_reply_uses_engine_step_and_cannot_mutate_engine_on_decide (test_policies.PolicyTests.test_delayed_reply_uses_engine_step_and_cannot_mutate_engine_on_decide) ... ok
+test_misordered_or_invalid_script_steps_are_rejected (test_policies.PolicyTests.test_misordered_or_invalid_script_steps_are_rejected) ... ok
+test_policy_proposals_do_not_bypass_engine_role_checks (test_policies.PolicyTests.test_policy_proposals_do_not_bypass_engine_role_checks) ... ok
+test_supplier_uses_the_same_policy_contract_with_own_observation (test_policies.PolicyTests.test_supplier_uses_the_same_policy_contract_with_own_observation) ... ok
+test_busy_or_terminal_runner_cannot_start_another_boundary (test_recovery.RecoveryTests.test_busy_or_terminal_runner_cannot_start_another_boundary) ... ok
+test_every_committed_boundary_recovers_and_continues_identical_protocol (test_recovery.RecoveryTests.test_every_committed_boundary_recovers_and_continues_identical_protocol) ... ok
+test_recovery_rejects_uncommitted_suffix_source_mismatch_and_tamper (test_recovery.RecoveryTests.test_recovery_rejects_uncommitted_suffix_source_mismatch_and_tamper) ... ok
+test_price_aba_and_active_aba_reject_old_offer_and_preserve_state (test_revisions.RevisionTests.test_price_aba_and_active_aba_reject_old_offer_and_preserve_state) ... ok
+test_price_then_revision_then_active_precedence_and_revision_validation (test_revisions.RevisionTests.test_price_then_revision_then_active_precedence_and_revision_validation) ... ok
+test_revision_tracks_actual_offer_content_changes_not_assignments_or_stock (test_revisions.RevisionTests.test_revision_tracks_actual_offer_content_changes_not_assignments_or_stock) ... ok
+test_batch_structural_and_role_failures_reject_entire_batch (test_runner.AdmissionAndIdempotencyTests.test_batch_structural_and_role_failures_reject_entire_batch) ... ok
+test_configuration_rejects_unsupported_waves_and_invalid_runtime (test_runner.AdmissionAndIdempotencyTests.test_configuration_rejects_unsupported_waves_and_invalid_runtime) ... ok
+test_duplicate_concurrent_actions_and_failures_are_cached_conflicts_rejected (test_runner.AdmissionAndIdempotencyTests.test_duplicate_concurrent_actions_and_failures_are_cached_conflicts_rejected) ... ok
+test_installed_cli_journal_replay_outside_repo (test_runner.AdmissionAndIdempotencyTests.test_installed_cli_journal_replay_outside_repo) ... ok
+test_business_failure_keeps_prefix_skips_tail_and_other_actors_continue (test_runner.RunnerTests.test_business_failure_keeps_prefix_skips_tail_and_other_actors_continue) ... ok
+test_cancellation_is_terminal_and_cancels_outstanding_driver (test_runner.RunnerTests.test_cancellation_is_terminal_and_cancels_outstanding_driver) ... ok
+test_complete_round_procurement_tick_wave_and_no_early_exit_on_wait (test_runner.RunnerTests.test_complete_round_procurement_tick_wave_and_no_early_exit_on_wait) ... ok
+test_execution_fault_keeps_prefix_unpublished_and_replays_recorded_boundary (test_runner.RunnerTests.test_execution_fault_keeps_prefix_unpublished_and_replays_recorded_boundary) ... ok
+test_failed_purchase_candidate_does_not_block_next_and_no_partial_fill (test_runner.RunnerTests.test_failed_purchase_candidate_does_not_block_next_and_no_partial_fill) ... ok
+test_fast_driver_cannot_execute_and_mid_commit_observations_remain_published (test_runner.RunnerTests.test_fast_driver_cannot_execute_and_mid_commit_observations_remain_published) ... ok
+test_frozen_public_private_isolation_feedback_and_same_tick_price (test_runner.RunnerTests.test_frozen_public_private_isolation_feedback_and_same_tick_price) ... ok
+test_global_purchase_order_across_listings_sharing_last_stock (test_runner.RunnerTests.test_global_purchase_order_across_listings_sharing_last_stock) ... ok
+test_invalid_whole_batch_consumes_opportunity_and_other_actor_continues (test_runner.RunnerTests.test_invalid_whole_batch_consumes_opportunity_and_other_actor_continues) ... ok
+test_llm_return_order_driver_order_provider_and_concurrency_do_not_change_market (test_runner.RunnerTests.test_llm_return_order_driver_order_provider_and_concurrency_do_not_change_market) ... ok
+test_procurement_once_per_round_and_forbidden_inside_seller_tick (test_runner.RunnerTests.test_procurement_once_per_round_and_forbidden_inside_seller_tick) ... ok
+test_recorded_trace_replay_ignores_clock_checks_economics_and_detects_tampering (test_runner.RunnerTests.test_recorded_trace_replay_ignores_clock_checks_economics_and_detects_tampering) ... ok
+test_resolution_seed_is_separate_from_market_seed_and_opportunity_identity (test_runner.RunnerTests.test_resolution_seed_is_separate_from_market_seed_and_opportunity_identity) ... ok
+test_stale_price_or_aba_revision_fails_without_preventing_current_offer_purchase (test_runner.RunnerTests.test_stale_price_or_aba_revision_fails_without_preventing_current_offer_purchase) ... ok
+test_technical_timeout_and_error_abort_wave_without_wait_or_advance (test_runner.RunnerTests.test_technical_timeout_and_error_abort_wave_without_wait_or_advance) ... ok
+test_complete_two_round_scenario_has_expected_economic_results (test_scenario.ScenarioTests.test_complete_two_round_scenario_has_expected_economic_results) ... ok
+test_engine_source_imports_only_standard_library_and_its_own_package (test_scenario.ScenarioTests.test_engine_source_imports_only_standard_library_and_its_own_package) ... ok
+test_installed_cli_runs_outside_repo_without_site_platform_packages (test_scenario.ScenarioTests.test_installed_cli_runs_outside_repo_without_site_platform_packages) ... ok
+test_same_seed_reproduces_all_output_without_touching_global_rng (test_scenario.ScenarioTests.test_same_seed_reproduces_all_output_without_touching_global_rng) ... ok
+test_advance_preserves_market_and_assigns_steps_without_wall_clock (test_transitions.TransitionTests.test_advance_preserves_market_and_assigns_steps_without_wall_clock) ... ok
+test_buyer_observation_excludes_other_orders_inventory_costs_and_money (test_transitions.TransitionTests.test_buyer_observation_excludes_other_orders_inventory_costs_and_money) ... ok
+test_competing_buyers_cannot_buy_the_same_last_unit (test_transitions.TransitionTests.test_competing_buyers_cannot_buy_the_same_last_unit) ... ok
+test_exception_after_draft_mutation_does_not_commit_or_consume_ids (test_transitions.TransitionTests.test_exception_after_draft_mutation_does_not_commit_or_consume_ids) ... ok
+test_invalid_advance_cannot_change_state (test_transitions.TransitionTests.test_invalid_advance_cannot_change_state) ... ok
+test_invalid_messages_cannot_create_conversations_or_impersonate_sellers (test_transitions.TransitionTests.test_invalid_messages_cannot_create_conversations_or_impersonate_sellers) ... ok
+test_listing_ids_and_ownership_cannot_be_overwritten (test_transitions.TransitionTests.test_listing_ids_and_ownership_cannot_be_overwritten) ... ok
+test_listing_requires_owned_stock_and_maintains_separate_product_and_cost (test_transitions.TransitionTests.test_listing_requires_owned_stock_and_maintains_separate_product_and_cost) ... ok
+test_multi_field_update_cannot_partially_apply (test_transitions.TransitionTests.test_multi_field_update_cannot_partially_apply) ... ok
+test_multiple_listings_share_owned_stock_without_double_counting (test_transitions.TransitionTests.test_multiple_listings_share_owned_stock_without_double_counting) ... ok
+test_private_conversations_messages_and_events_are_participant_scoped (test_transitions.TransitionTests.test_private_conversations_messages_and_events_are_participant_scoped) ... ok
+test_procurement_insufficient_funds_preserves_entire_state (test_transitions.TransitionTests.test_procurement_insufficient_funds_preserves_entire_state) ... ok
+test_procurement_moves_money_and_goods_between_supplier_and_seller (test_transitions.TransitionTests.test_procurement_moves_money_and_goods_between_supplier_and_seller) ... ok
+test_procurement_rejects_invalid_offer_price_quantity_and_actor (test_transitions.TransitionTests.test_procurement_rejects_invalid_offer_price_quantity_and_actor) ... ok
+test_public_messages_and_seller_replies_are_visible (test_transitions.TransitionTests.test_public_messages_and_seller_replies_are_visible) ... ok
+test_purchase_cash_stock_order_and_event_are_consistent (test_transitions.TransitionTests.test_purchase_cash_stock_order_and_event_are_consistent) ... ok
+test_purchase_insufficient_buyer_money_is_atomic (test_transitions.TransitionTests.test_purchase_insufficient_buyer_money_is_atomic) ... ok
+test_purchase_insufficient_seller_stock_is_atomic (test_transitions.TransitionTests.test_purchase_insufficient_seller_stock_is_atomic) ... ok
+test_purchase_rejects_bad_actor_listing_status_quantity_and_price (test_transitions.TransitionTests.test_purchase_rejects_bad_actor_listing_status_quantity_and_price) ... ok
+test_purchase_stale_expected_price_is_atomic (test_transitions.TransitionTests.test_purchase_stale_expected_price_is_atomic) ... ok
+test_sessions_have_independent_state_and_counters (test_transitions.TransitionTests.test_sessions_have_independent_state_and_counters) ... ok
+test_wait_logs_abstention_without_money_stock_or_time_changes (test_transitions.TransitionTests.test_wait_logs_abstention_without_money_stock_or_time_changes) ... ok
+
+----------------------------------------------------------------------
+Ran 64 tests in 2.861s
+
+OK
+Checking platform.ps1 test
+.............................................                            [100%]
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  D:\SalesBench\backend\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+.venv\Lib\site-packages\starlette\testclient.py:53
+  D:\SalesBench\backend\.venv\Lib\site-packages\starlette\testclient.py:53: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = Callable[[], AbstractContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+45 passed, 2 warnings in 22.15s
+Checking run.ps1 typecheck
+$ vue-tsc --noEmit
+Checking run.ps1 test-frontend
+$ vitest run
+
+ RUN  v3.2.7 D:/SalesBench/frontend
+
+ ✓ tests/service.test.ts (18 tests) 16ms
+ ✓ tests/platform.test.ts (10 tests) 13ms
+
+ Test Files  2 passed (2)
+      Tests  28 passed (28)
+   Start at  22:22:45
+   Duration  609ms (transform 114ms, setup 0ms, collect 303ms, tests 29ms, environment 0ms, prepare 356ms)
+
+Checking run.ps1 build
+$ vue-tsc --noEmit && vite build
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 57 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.78 kB │ gzip:  0.55 kB
+dist/assets/index-BytSF8NW.css   26.41 kB │ gzip:  6.58 kB
+dist/assets/index-BKYBo9lX.js   135.69 kB │ gzip: 49.55 kB
+✓ built in 558ms
+Checking run.ps1 test-preview
+$ node tests/browser/preview.mjs
+Verification output: D:\SalesBench\docs\verification\SB-METRICS-001
+PASS production preview, real binding entry, password field, no demo controller
+Checking run.ps1 test-market
+$ node tests/browser/market.mjs
+Verification output: D:\SalesBench\docs\verification\SB-METRICS-001
+READY local API
+READY browser
+BOUND seller-a
+BOUND seller-b
+BOUND buyer-1
+BOUND buyer-2
+PASS four isolated actor bindings; real OpenAPI available
+PASS Round procurement waits for both Sellers
+PASS Seller publication only after both ordered batches; Buyers see Listings
+PASS public + private + purchase batch is pending until other Buyer submits
+PASS next Tick Seller feedback and private isolation; price/content visible to same Tick Buyers
+PASS direct purchase versus explicit non-purchase; active/content revisions preserve protocol
+PASS browser reload restores committed balance/orders; backend and PostgreSQL restart continue same session
+PASS post-restart Round continues; two Buyers consume available shared stock
+PASS five Buyer pages, Seller final state, H5 layout and PostgreSQL inspection
+Checking run.ps1 test-browser
+$ node tests/browser/run.mjs
+Verification output: D:\SalesBench\.local\verification\legacy-demo\2026-09-24T14-23-55-529Z
+PASS desktop five-page navigation and layout
+PASS product filtering, detail and explicit non-purchase
+PASS public message and delayed preset reply; draft isolation
+PASS private send, public/private separation and product link
+PASS quantity validation, purchase result, account and ranking consistency
+PASS direct purchase, continue browsing and browser Agent replay
+PASS refresh resets demo; narrow-screen five pages and modal
+PASS UI loading, read failure and retry using dev-only fixture
+PASS external updates, stale price rejection and safe submission retry
+PASS complete system regression (Engine, Runner, PostgreSQL, Vue, real market, legacy UI)

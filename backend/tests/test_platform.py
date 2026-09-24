@@ -26,13 +26,14 @@ from helpers import create_market, prepare_buyers, queue_purchases, request_for,
 def test_empty_schema_migration_and_model_schema_match(store):
     tables = set(inspect(store["engine"]).get_table_names())
     assert tables == {"market_sessions", "actor_bindings", "actor_projections", "publications", "batch_receipts", "action_receipts",
-                      "journal_entries", "resolutions", "semantic_events", "outbox_notices", "alembic_version"}
+                      "journal_entries", "resolutions", "semantic_events", "outbox_notices", "alembic_version",
+                      "metric_snapshots", "leaderboard_snapshots"}
     cfg = Config(str(Path(__file__).resolve().parents[1] / "alembic.ini"))
     with store["engine"].begin() as connection:
         cfg.attributes["connection"] = connection
         command.upgrade(cfg, "head")  # Re-running upgrade is safe.
         command.check(cfg)
-        assert connection.scalar(text("SELECT version_num FROM alembic_version")) == "sb_platform_001"
+        assert connection.scalar(text("SELECT version_num FROM alembic_version")) == "sb_metrics_001"
 
 
 def test_duplicate_request_persists_across_service_instances_and_only_one_purchase(store):

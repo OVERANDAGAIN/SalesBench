@@ -1,0 +1,15 @@
+﻿leaderboard_snapshot_id,source_publication_version,round_index,tick_index,seller_id,current_rank,display_name,previous_rank,dev_profit_cents
+lb-cc6022bc70ab9489b5ce9e7d724ecd1a60ff6d0c8e013da124881441d01312f9,0,0,0,seller-a,1,Seller A,,0
+lb-cc6022bc70ab9489b5ce9e7d724ecd1a60ff6d0c8e013da124881441d01312f9,0,0,0,seller-b,2,Seller B,,0
+lb-583a607d9e4a34f23a41ddf8036e020422eeeeba6e8ec42f8b96d2694d9d2738,3,1,1,seller-a,1,Seller A,1,200
+lb-583a607d9e4a34f23a41ddf8036e020422eeeeba6e8ec42f8b96d2694d9d2738,3,1,1,seller-b,2,Seller B,2,-300
+lb-ffa3fc2de2878f17a15d714ccdad9540a34593d0d8dfb923f6a67b908fbd677d,5,1,2,seller-a,1,Seller A,1,200
+lb-ffa3fc2de2878f17a15d714ccdad9540a34593d0d8dfb923f6a67b908fbd677d,5,1,2,seller-b,2,Seller B,2,200
+lb-de7e12deb3163736687644d94262866c5ead6ccda1bb9896c42d8763e9639e21,7,1,3,seller-a,1,Seller A,1,200
+lb-de7e12deb3163736687644d94262866c5ead6ccda1bb9896c42d8763e9639e21,7,1,3,seller-b,2,Seller B,2,200
+lb-c9b14d6fa000fd7a836ae199708a3010e293172bd46bb0c6659c0fb64e7ea0b9,11,2,1,seller-a,1,Seller A,1,900
+lb-c9b14d6fa000fd7a836ae199708a3010e293172bd46bb0c6659c0fb64e7ea0b9,11,2,1,seller-b,2,Seller B,2,200
+lb-9add30a63b9e3479323cc2b472e1e0d7bd8b9ba42ffa43c5b630d9e8b62ca025,13,2,2,seller-a,1,Seller A,1,900
+lb-9add30a63b9e3479323cc2b472e1e0d7bd8b9ba42ffa43c5b630d9e8b62ca025,13,2,2,seller-b,2,Seller B,2,200
+lb-37e3a1557639554e7440a8c01975e972abc28b6e4ebf8389d13fc57141eac40a,15,2,3,seller-a,1,Seller A,1,900
+lb-37e3a1557639554e7440a8c01975e972abc28b6e4ebf8389d13fc57141eac40a,15,2,3,seller-b,2,Seller B,2,200

@@ -1,0 +1,5 @@
+﻿tick,wave,round,seller_id,listing_id,offer_revision,unit_price_cents
+1,SELLER_STRATEGY,1,seller-a,seller-a/cup,1,300
+1,SELLER_STRATEGY,1,seller-b,seller-b/cup,1,500
+2,SELLER_STRATEGY,1,seller-a,seller-a/cup,2,400
+1,SELLER_STRATEGY,2,seller-a,seller-a/cup,5,450

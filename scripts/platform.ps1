@@ -1,11 +1,14 @@
 param(
-  [ValidateSet('install','init-db','migrate','test','serve','recover','demo','create-manual','inspect','pg-start','pg-stop','pg-status')]
+  [ValidateSet('install','init-db','migrate','test','serve','recover','demo','create-manual','inspect','metrics','pg-start','pg-stop','pg-status')]
   [string]$Task = 'test',
   [string]$SessionId,
-  [int]$Port = 8000
+  [int]$Port = 8000,
+  [ValidateSet('json','csv')][string]$Format = 'json',
+  [string]$OutDir
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
+if ($OutDir) { $OutDir = [IO.Path]::GetFullPath($OutDir) }
 $runtime = Get-Content -LiteralPath (Join-Path $root '.local/runtime.json') -Raw | ConvertFrom-Json
 $platform = Get-Content -LiteralPath (Join-Path $root '.local/platform.json') -Raw | ConvertFrom-Json
 $env:UV_CACHE_DIR = Join-Path $runtime.cache 'uv'
@@ -37,6 +40,12 @@ try {
     'demo' { & $runtime.uv run --locked --python $runtime.python python -m app.cli demo }
     'create-manual' { & $runtime.uv run --locked --python $runtime.python python -m app.cli create-manual }
     'inspect' { if (!$SessionId) { throw 'inspect requires -SessionId' }; & $runtime.uv run --locked --python $runtime.python python -m app.cli inspect --session-id $SessionId }
+    'metrics' {
+      if (!$SessionId) { throw 'metrics requires -SessionId' }
+      $metricArgs = @('--session-id',$SessionId,'--format',$Format)
+      if ($OutDir) { $metricArgs += @('--out-dir',$OutDir) }
+      & $runtime.uv run --locked --python $runtime.python python -m app.cli metrics @metricArgs
+    }
   }
   $taskExit = $LASTEXITCODE
 } finally { Pop-Location }

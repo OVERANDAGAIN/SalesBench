@@ -27,6 +27,7 @@ class MarketSession(Base):
     state_digest: Mapped[str] = mapped_column(String(64))
     runtime: Mapped[dict] = mapped_column(JSONB)
     next_boundary: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    metrics_policy: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     __table_args__ = (CheckConstraint("published_version >= 0 AND fence >= 0 AND transcript_count >= 2", name="ck_session_counters"),)
 
@@ -117,6 +118,29 @@ class OutboxNotice(Base):
     session_id: Mapped[str] = mapped_column(ForeignKey("market_sessions.id"), primary_key=True)
     version: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     payload: Mapped[dict] = mapped_column(JSONB)
+
+
+class LeaderboardSnapshot(Base):
+    __tablename__ = "leaderboard_snapshots"
+    session_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    source_publication_version: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    payload: Mapped[dict] = mapped_column(JSONB)
+    payload_digest: Mapped[str] = mapped_column(String(64))
+    __table_args__ = (ForeignKeyConstraint(["session_id", "source_publication_version"], ["publications.session_id", "publications.version"]),)
+
+
+class MetricSnapshot(Base):
+    __tablename__ = "metric_snapshots"
+    session_id: Mapped[str] = mapped_column(ForeignKey("market_sessions.id"), primary_key=True)
+    transcript_count: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    publication_version: Mapped[int] = mapped_column(BigInteger)
+    leaderboard_source_version: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    payload: Mapped[dict] = mapped_column(JSONB)
+    payload_digest: Mapped[str] = mapped_column(String(64))
+    __table_args__ = (
+        ForeignKeyConstraint(["session_id", "publication_version"], ["publications.session_id", "publications.version"]),
+        ForeignKeyConstraint(["session_id", "leaderboard_source_version"], ["leaderboard_snapshots.session_id", "leaderboard_snapshots.source_publication_version"]),
+    )
 
 
 def database(url: str):

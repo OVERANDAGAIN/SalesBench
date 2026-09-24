@@ -24,8 +24,9 @@ from salesbench_engine.runner.replay import ReplayMismatch
 
 from .persistence import (
     ActionReceipt, ActorBinding, ActorProjection, BatchReceipt, JournalEntry,
-    MarketSession, OutboxNotice, Publication, Resolution, SemanticEvent,
+    MarketSession, OutboxNotice, Publication, Resolution, SemanticEvent, MetricSnapshot, LeaderboardSnapshot,
 )
+from .metrics import new_policy
 from .contracts import CreateSession, SubmitBatch, postgres_json
 
 API_SCHEMA = "sb-platform-v1"
@@ -126,7 +127,7 @@ class MarketService:
         return {actor.id: {"state": data(runner.observe(actor.id)), "opportunity": data(pending.get(actor.id))}
                 for actor in (*setup.sellers, *setup.buyers)}
 
-    def create(self, session_id: str, setup_payload: dict, market_config: dict):
+    def create(self, session_id: str, setup_payload: dict, market_config: dict, metrics_policy=None):
         try:
             CreateSession.model_validate({"session_id": session_id, "setup": setup_payload, "market_config": market_config})
             postgres_json(setup_payload)
@@ -135,13 +136,14 @@ class MarketService:
                 raise ValueError("Unknown setup fields")
             setup = setup_from_data(setup_payload)
             config = config_from_data({**data(MarketConfig()), **market_config})
+            metric_policy = new_policy(metrics_policy)
             actor_ids = [a.id for a in (*setup.sellers, *setup.buyers)]
             if any(len(actor) > 128 for actor in actor_ids):
                 raise ValueError("Actor ID storage limit")
             runner = Runner(setup, {actor: SubmissionDriver() for actor in actor_ids}, config=config)
         except (ValueError, TypeError, KeyError, AttributeError, RecursionError):
             raise ServiceError("INVALID_MARKET_SETUP", 422) from None
-        fingerprint = digest({"setup": setup, "config": config})
+        fingerprint = digest({"setup": setup, "config": config, "metrics_policy": metric_policy})
         records = runner.journal.records
         tokens = {actor: secrets.token_urlsafe(32) for actor in actor_ids}
         with self.sessions() as db:
@@ -151,14 +153,15 @@ class MarketService:
             db.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": create_lock})
             existing = db.get(MarketSession, session_id)
             if existing:
-                if existing.creation_fingerprint != fingerprint:
+                expected_fingerprint = fingerprint if existing.metrics_policy is not None else digest({"setup": setup, "config": config})
+                if existing.creation_fingerprint != expected_fingerprint or (existing.metrics_policy is None and metrics_policy):
                     raise ServiceError("SESSION_ID_CONFLICT")
                 return {"session_id": session_id, "runtime": existing.runtime, "actor_tokens": None, "replayed": True}
             runtime = self._runtime(runner)
             db.add(MarketSession(id=session_id, creation_fingerprint=fingerprint, setup=data(setup), market_config=data(config),
                                  source_digest=self.code_digest, status=runtime["status"], published_version=0, fence=0,
                                  transcript_count=len(records), transcript_digest=digest(records),
-                                 state_digest=digest(runner.economic_state()), runtime=runtime, next_boundary=data(runner.next_boundary)))
+                                 state_digest=digest(runner.economic_state()), runtime=runtime, next_boundary=data(runner.next_boundary), metrics_policy=metric_policy))
             db.flush()
             for actor in (*setup.sellers, *setup.buyers):
                 db.add(ActorBinding(session_id=session_id, actor_id=actor.id,
@@ -169,6 +172,7 @@ class MarketService:
                 db.add(ActorProjection(session_id=session_id, actor_id=actor, version=0, payload=projection))
             self._append_records(db, session_id, records)
             self._commit(db, "create")
+        self._ensure_metrics(session_id)
         return {"session_id": session_id, "runtime": runtime, "actor_tokens": tokens, "replayed": False}
 
     def rotate_binding(self, session_id, actor_id):
@@ -184,17 +188,41 @@ class MarketService:
 
     def observe(self, session_id, token):
         with self.sessions() as db:
+            self._binding(db, session_id, token)  # Authenticate before materialization.
+        # An economic COMMIT may land between ensure and the MVCC read. Retry
+        # that exact missing derived boundary; never pair it with an older board.
+        for attempt in range(3):
+            self._ensure_metrics(session_id)
+            try:
+                return self._observe_committed(session_id, token)
+            except ServiceError as error:
+                if error.code != "METRICS_NOT_READY" or attempt == 2:
+                    raise
+
+    def _observe_committed(self, session_id, token):
+        with self.sessions() as db:
             # One SQL statement gives a single MVCC view of projection AND runtime.
-            row = db.execute(select(ActorProjection, MarketSession.runtime).join(
+            row = db.execute(select(ActorProjection, MarketSession.runtime, MarketSession.metrics_policy,
+                                    MetricSnapshot, LeaderboardSnapshot).join(
                 ActorBinding, (ActorBinding.session_id == ActorProjection.session_id) & (ActorBinding.actor_id == ActorProjection.actor_id)
-            ).join(MarketSession, MarketSession.id == ActorProjection.session_id).where(
+            ).join(MarketSession, MarketSession.id == ActorProjection.session_id).outerjoin(
+                MetricSnapshot, (MetricSnapshot.session_id == MarketSession.id) & (MetricSnapshot.transcript_count == MarketSession.transcript_count)
+            ).outerjoin(LeaderboardSnapshot, (LeaderboardSnapshot.session_id == MetricSnapshot.session_id) &
+                        (LeaderboardSnapshot.source_publication_version == MetricSnapshot.leaderboard_source_version)).where(
                 ActorProjection.session_id == session_id, ActorBinding.token_digest == token_digest(token)
             )).first()
             if row is None:
                 raise ServiceError("INVALID_ACTOR_BINDING", 403)
-            projection, runtime = row
+            projection, runtime, policy, metrics, board = row
+            public_board = None
+            if policy is not None:
+                from .metric_store import MetricStore
+                if MetricStore.checked(metrics)["consistency_errors"]:
+                    raise ServiceError("METRICS_INCONSISTENT", 503)
+                public_board = MetricStore.checked(board)
             return {"schema_version": API_SCHEMA, "session_id": session_id, "actor_id": projection.actor_id,
-                    "published_version": projection.version, **deepcopy(projection.payload), "runtime": deepcopy(runtime)}
+                    "published_version": projection.version, **deepcopy(projection.payload), "runtime": deepcopy(runtime),
+                    "leaderboard": public_board}
 
     def runtime(self, session_id, token):
         return self.observe(session_id, token)["runtime"]
@@ -391,9 +419,24 @@ class MarketService:
             self._commit(db, "boundary")
         # There is no second, in-process actor publication after COMMIT.
         # API readers use projections committed above; notification is a durable outbox.
+        self._ensure_metrics(claim.session_id)
         return deepcopy(runtime)
 
+    def _ensure_metrics(self, session_id):
+        from .metric_store import MetricStore
+        MetricStore(self).ensure(session_id)
+
+    def metrics(self, session_id, *, publication_version=None):
+        """Trusted host only; no tokens, private text or raw journal in the report."""
+        from .metric_store import MetricStore
+        return MetricStore(self).read(session_id, publication_version=publication_version)
+
+    def leaderboard(self, session_id, *, publication_version=None):
+        report = self.metrics(session_id, publication_version=publication_version)
+        return {key: report[key] for key in ("session_id", "source_publication_version", "leaderboard", "leaderboard_history", "publication_leaderboards")}
+
     def run_ready(self, session_id):
+        self._ensure_metrics(session_id)
         claim = self.claim(session_id)
         if claim is None:
             return {"progressed": False}
