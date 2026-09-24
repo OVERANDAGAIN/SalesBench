@@ -1,5 +1,15 @@
 # 环境与运行
 
+## 当前手工多角色验收（SB-E2E-001）
+
+复用现有 Node/pnpm/Python/uv/PostgreSQL/Edge，无新依赖、数据库迁移或全局环境变更。Vue 默认网络模式；生产构建始终绑定真实平台。历史 demo 仅在开发态显式 `VITE_BUYER_SERVICE=demo` 时启用，不能用于本次验收或作为失败回退。`run.ps1 frontend` 使用 127.0.0.1:5173；Vite/production preview 将 `/api/v1` 同源代理至 127.0.0.1:8000。
+
+创建未推进的 2 Seller + 2 Buyer 场次：`pwsh -File scripts/platform.ps1 create-manual`。输出仅含 session ID/文件目录，不打印 token；角色 JSON 位于忽略的 `.local/manual/<session>/`。各标签页通过文件输入导入一份角色绑定，或输入 session/token；无需管理员 token 进入浏览器。开发者只读审计：`pwsh -File scripts/platform.ps1 inspect -SessionId '<sid>'`。
+
+真实浏览器自动验收：先 pg-start / migrate / build，确保 8000 / 4173 空闲，再 `pwsh -File scripts/run.ps1 test-market`。它用本机 Edge 的四个隔离 context、生产构建和真实 API/DB，不 mock 网络；自建新 session，过程中会重启所配置的本机 PostgreSQL，结束清理自有 API/preview/browser 进程，PG 保持原测试需要的运行状态，任务收尾另用 pg-stop。不要在其他工作正使用该开发 PG 时运行重启验收。截图与无凭据报告写到 `docs/verification/SB-E2E-001/`。
+
+`test-browser` 仍是明确 local demo 的历史回归，只写 `.local/SB-002B-regression/`，不覆盖旧验收截图；不能冒充真实 E2E。原前端单元测试继续保留。手工启动、绑定、Wave 操作与表映射见 [MANUAL_MARKET.md](MANUAL_MARKET.md)。
+
 ## 当前持久平台（SB-PLATFORM-001 / 5070）
 
 本次明确授权 PostgreSQL，替代下方历史阶段“不启动数据库”的限制。复用 Python 3.12.14、uv 0.8.22；Engine 0.2.1 仍零运行时依赖。backend 锁定新增 SQLAlchemy 2.0.54、Alembic 1.20.0、psycopg/psycopg-binary 3.3.6，FastAPI/Uvicorn/httpx/pytest 沿用原版本。backend 以本地 editable path 引用 `../engine`，源码不复制；安装只用 `--locked`。

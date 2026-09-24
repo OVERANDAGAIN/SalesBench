@@ -2,6 +2,8 @@
 
 2026-09-24。本地单机 FastAPI + PostgreSQL application boundary，API schema `sb-platform-v1`。保留已经验收的 Round → Tick → Wave、Round-level procurement、冻结观察、seeded purchase resolution 与 V1 批次失败规则。Vue 本轮仍是本地演示，没有接真实 LLM 或 HumanDriver。
 
+SB-E2E-001 更新：Vue / Seller 工程验收页面现已接入该 boundary，见 [MANUAL_MARKET.md](MANUAL_MARKET.md)。新增本人最近 receipts 读取、create-manual 和只读 inspect CLI；无需 schema migration，Engine/Runner/事务与研究语义不变。下文 SB-PLATFORM-001 的“尚未 Vue 接入”为历史范围描述；LLM/HumanDriver 仍未接入。
+
 ## 职责与运行路径
 
 ```text
@@ -80,6 +82,7 @@ Journal、semantic events、resolution、完整状态摘要和所有私有 proje
 | `GET /api/v1/sessions/{sid}/runtime` | actor bearer；返回 committed phase/next boundary/step/version，无他人进度或批次 |
 | `POST /api/v1/sessions/{sid}/actions` | actor bearer；保存一份完整 bounded batch；202 pending、409 rejected、200 已完成的重复请求 |
 | `GET /api/v1/sessions/{sid}/receipts/{request_id}` | actor bearer；只查本人 receipt；未知为 404 `RECEIPT_NOT_FOUND` |
+| `GET /api/v1/sessions/{sid}/receipts` | actor bearer；本人最近 50 条回执，pending 优先；支持刷新/重新绑定后识别当前已提交机会 |
 | `GET /api/v1/sessions/{sid}/notifications?after_version=2` | actor bearer；最多 100 条按版本排序的 invalidation，游标取最后版本 |
 | `POST /api/v1/sessions/{sid}/run` | 管理 bearer；显式推进一个 ready 边界，通常由后台 worker 完成 |
 

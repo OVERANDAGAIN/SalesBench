@@ -207,6 +207,15 @@ class MarketService:
                 raise ServiceError("RECEIPT_NOT_FOUND", 404)
             return {**deepcopy(row.receipt), "replayed": False}
 
+    def receipts(self, session_id, token):
+        """Own recent receipts for reconnecting clients; never another actor's intents."""
+        with self.sessions() as db:
+            actor = self._binding(db, session_id, token).actor_id
+            rows = db.scalars(select(BatchReceipt).where(
+                BatchReceipt.session_id == session_id, BatchReceipt.actor_id == actor
+            ).order_by((BatchReceipt.status == "pending").desc(), BatchReceipt.created_at.desc(), BatchReceipt.request_id).limit(50))
+            return {"receipts": [deepcopy(row.receipt) for row in rows]}
+
     def notifications(self, session_id, token, after_version):
         with self.sessions() as db:
             self._binding(db, session_id, token)

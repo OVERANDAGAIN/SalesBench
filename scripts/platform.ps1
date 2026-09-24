@@ -1,5 +1,5 @@
 param(
-  [ValidateSet('install','init-db','migrate','test','serve','recover','demo','pg-start','pg-stop','pg-status')]
+  [ValidateSet('install','init-db','migrate','test','serve','recover','demo','create-manual','inspect','pg-start','pg-stop','pg-status')]
   [string]$Task = 'test',
   [string]$SessionId,
   [int]$Port = 8000
@@ -10,6 +10,7 @@ $runtime = Get-Content -LiteralPath (Join-Path $root '.local/runtime.json') -Raw
 $platform = Get-Content -LiteralPath (Join-Path $root '.local/platform.json') -Raw | ConvertFrom-Json
 $env:UV_CACHE_DIR = Join-Path $runtime.cache 'uv'
 $env:UV_PYTHON_DOWNLOADS = 'never'
+$env:PYTHONUTF8 = '1'
 $env:SALESBENCH_DATABASE_URL = $platform.database_url
 $env:SALESBENCH_ADMIN_TOKEN = $platform.admin_token
 
@@ -34,6 +35,8 @@ try {
     'serve' { & $runtime.uv run --locked --python $runtime.python uvicorn app.main:app --host 127.0.0.1 --port $Port --workers 1 }
     'recover' { if (!$SessionId) { throw 'recover requires -SessionId' }; & $runtime.uv run --locked --python $runtime.python python -m app.cli recover --session-id $SessionId }
     'demo' { & $runtime.uv run --locked --python $runtime.python python -m app.cli demo }
+    'create-manual' { & $runtime.uv run --locked --python $runtime.python python -m app.cli create-manual }
+    'inspect' { if (!$SessionId) { throw 'inspect requires -SessionId' }; & $runtime.uv run --locked --python $runtime.python python -m app.cli inspect --session-id $SessionId }
   }
   $taskExit = $LASTEXITCODE
 } finally { Pop-Location }

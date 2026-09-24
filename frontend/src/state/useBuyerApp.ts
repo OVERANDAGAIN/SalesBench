@@ -1,8 +1,9 @@
 import { computed, onMounted, onUnmounted, reactive } from 'vue'
 import type { Action, ActionResult, Actor, BuyerService, Merchant, Observation, Page, Product, Query } from '../domain/types'
+import type { NetworkBuyerService } from '../platform/buyer'
 
 type Dialog = 'loading' | 'detail' | 'checkout' | 'result' | 'config' | null
-export function useBuyerApp(service: BuyerService) {
+export function useBuyerApp(service: BuyerService | NetworkBuyerService) {
   const state = reactive({
     page: 'leaderboard' as Page, merchantId: 's1', filterMerchantId: undefined as string | undefined,
     snapshot: null as Observation | null, actor: null as Actor | null,
@@ -39,6 +40,8 @@ export function useBuyerApp(service: BuyerService) {
       if (!observation.ok) { state.error = observation.error.message; return }
       state.snapshot = observation
       state.actor = observation.actor
+      if (observation.view === 'public' || observation.view === 'private') state.merchantId = observation.merchantId
+      else if (!observation.merchants.some(m => m.id === state.merchantId)) state.merchantId = observation.merchants[0]?.id ?? ''
     } catch (error) { if (sequence === requestSequence) state.error = message(error) }
     finally { if (sequence === requestSequence) state.loading = false }
   }
@@ -78,11 +81,12 @@ export function useBuyerApp(service: BuyerService) {
   }
   async function confirmPurchase(quantity: number) {
     if (!state.product || state.purchasing || state.dialog !== 'checkout') return
-    const payload = { productId: state.product.id, quantity, expectedUnitPriceCents: state.product.priceCents }
+    const payload = { productId: state.product.id, quantity, expectedUnitPriceCents: state.product.priceCents, ...(state.product.offerRevision === undefined ? {} : { expectedOfferRevision: state.product.offerRevision }) }
     if (!purchaseIntent || JSON.stringify(purchaseIntent.payload) !== JSON.stringify(payload)) purchaseIntent = { id: `purchase-${crypto.randomUUID()}`, type: 'purchase', payload }
     state.purchasing = true
     state.purchaseError = ''
     try {
+      if ('stage' in service) { service.stage(purchaseIntent); state.purchasing = false; close(); toast('购买已加入本轮草稿，尚未成交。请检查批次并提交本轮。'); return }
       const receipt = await service.execute(purchaseIntent)
       if (receipt.status === 'failed') { state.purchaseError = receipt.error.message; return }
       if (receipt.status === 'pending') { state.purchaseError = '操作仍在处理中，请稍后重试同一请求。'; return }
@@ -94,7 +98,12 @@ export function useBuyerApp(service: BuyerService) {
     } catch (error) { state.purchaseError = message(error) }
     finally { state.purchasing = false }
   }
-  function decline() { close(); toast('已选择暂不购买，余额不变。') }
+  function decline() {
+    try {
+      if ('decline' in service) { service.decline(); close(); toast('已移除购买意图；保留消息或明确 Wait。请提交本轮。') }
+      else { close(); toast('已选择暂不购买，余额不变。') }
+    } catch (error) { state.purchaseError = message(error); toast(message(error)) }
+  }
   function setDraft(text: string) { state.drafts[draftKey.value] = text; state.messageError = '' }
   async function send() {
     if (state.sending || state.loading || !['public', 'private'].includes(state.page)) return
@@ -111,6 +120,7 @@ export function useBuyerApp(service: BuyerService) {
     state.sending = true
     state.messageError = ''
     try {
+      if ('stage' in service) { service.stage(action); state.drafts[key] = ''; messageIntents.delete(key); toast('消息已加入本轮草稿，尚未发送。请提交本轮。'); return }
       const receipt = await service.execute(action)
       if (receipt.status === 'failed') { state.messageError = receipt.error.message; return }
       if (receipt.status === 'pending') { state.messageError = '消息仍在处理中，请稍后重试同一请求。'; return }

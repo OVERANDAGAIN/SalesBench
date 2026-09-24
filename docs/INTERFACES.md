@@ -1,5 +1,9 @@
 # 接口与职责 v0.1 草案
 
+SB-E2E-001：参与者页面默认已接真实 `sb-platform-v1`。`MarketClient` 是共享网络边界，Buyer read facade 继续提供五页 observe/subscribe；动作采用 `stage → submitBatch → getReceipt`，不把历史单动作 `execute` 的即时成功语义套到 Wave 上。Seller 同样使用 MarketClient；没有绕过 application service。
+
+新增 `GET /api/v1/sessions/{sid}/receipts` 仅列本人最近 50 条回执（pending 优先），用于重新绑定后恢复“本人已提交”；原 receipt-by-ID 保留。无数据库迁移或研究协议变更。publication/Listing revisions 原样映射，purchase 保存观察时的 expected price/revision，Engine step 显示为逻辑 Step，不伪造 UTC。当前没有排行榜观察，五页排行榜入口展示真实公开商家并明确“排名未发布”，不计算新榜单。详细映射/重试见 [MANUAL_MARKET.md](MANUAL_MARKET.md)。以下历史 Vue 演示协议仅供对照。
+
 SB-PLATFORM-001 更新：真实服务使用独立 `sb-platform-v1` envelope，规范见 [PLATFORM.md](PLATFORM.md)。`/api/v1/sessions/...` 通过 actor token 绑定身份，提交带 publication version / opportunity ID 的有限批次；持久 receipt 和通知游标由平台提供。下文 **仅保留 Vue 本地演示契约**，没有替换现有 BuyerService，也不是当前 HTTP API 文档。
 
 接入差异：`productId` 需映射 Listing；purchase 必须带 expected price / offer revision；一个 HTTP 请求表示完整机会批次（单动作也包装成批次），不立即购买；已提交 publication 与通知游标同版本，Listing 两种 revision 独立；UTC 请求时间不能代替 Round/Tick/Wave/step。旧 `unknown receipt` 需用原 ID 和原 envelope 重试，不能生成新 ID。参与者只读自己的 observation/receipt，subscribe 后续使用 durable invalidation boundary，不广播 journal。用户账户体系、UI 状态与 actor binding 仍不能混为一体。

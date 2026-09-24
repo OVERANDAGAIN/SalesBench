@@ -65,6 +65,11 @@ def receipt(session_id: str, request_id: str, supplied: Annotated[str, Depends(t
     return market.receipt(session_id, supplied, request_id)
 
 
+@router.get("/sessions/{session_id}/receipts")
+def receipts(session_id: str, supplied: Annotated[str, Depends(token)], market: Annotated[MarketService, Depends(service)]):
+    return market.receipts(session_id, supplied)
+
+
 @router.get("/sessions/{session_id}/notifications")
 def notifications(session_id: str, supplied: Annotated[str, Depends(token)], market: Annotated[MarketService, Depends(service)],
                   after_version: Annotated[int, Field(ge=-1)] = -1):

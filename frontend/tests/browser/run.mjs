@@ -9,7 +9,7 @@ import { chromium } from 'playwright-core'
 const frontend = fileURLToPath(new URL('../..', import.meta.url))
 const root = path.dirname(frontend)
 const config = JSON.parse(await readFile(path.join(root, '.local/runtime.json'), 'utf8'))
-const evidence = path.join(root, 'docs/verification/SB-002B')
+const evidence = path.join(root, '.local/SB-002B-regression')
 await mkdir(evidence, { recursive: true })
 const temp = path.join(config.cache, 'browser-temp')
 await mkdir(temp, { recursive: true })
@@ -34,7 +34,7 @@ async function stopOwnedServer() {
   } else server.kill('SIGTERM')
 }
 try {
-  server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', '--host', '127.0.0.1', '--port', String(port), '--strictPort'], { cwd: frontend, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] })
+  server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', '--host', '127.0.0.1', '--port', String(port), '--strictPort'], { cwd: frontend, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, VITE_BUYER_SERVICE: 'demo' } })
   server.stdout.on('data', data => { log += data })
   server.stderr.on('data', data => { log += data })
   let ready = false

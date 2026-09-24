@@ -1,6 +1,12 @@
 # 总计划
 
-## 当前任务 SB-PLATFORM-001
+## 当前任务 SB-E2E-001
+
+2026-09-24，用户验收 Engine / Runner / Persistent Market Service 后授权 Manual Multi-Actor Market Integration。执行端 5070，分支 `feat/sb-core-skeleton`，开工 HEAD `56ccf2eff13c4054b367ce6ae08c6ff6d8d31baa` 与远端一致。保留 main 与 `.idea/`；没有新增依赖或修改研究协议。
+
+本轮实现真实 Vue network adapter、按标签页 actor binding、Buyer 五页、Seller 工程操作页、有序批次及 Wave/receipt/unknown 状态、持久通知轮询、本地 create-manual/inspect 和 2 Seller + 2 Buyer 浏览器验收。操作说明见 [MANUAL_MARKET.md](MANUAL_MARKET.md)，实际验收与接手点见 [SB-E2E-001](handoffs/SB-E2E-001.md)。不进入真实 LLM、正式 HumanDriver、订阅推送或新研究机制。
+
+## SB-PLATFORM-001（历史）
 
 2026-09-24，用户验收 SB-RUNNER-001 后授权 Persistent Market Service。执行端 5070，沿用 `feat/sb-core-skeleton`；开工 HEAD `be7bb73335d2c59f22035aef5ceca564f863184a` 与 origin 一致，main 仍为 `2ab44d79e5d28d5c0c17b17e3cdb2a5768579408`，用户 `.idea/` 原样保留。
 

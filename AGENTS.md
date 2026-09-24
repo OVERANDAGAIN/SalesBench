@@ -7,7 +7,7 @@
 
 ## 单执行端与 Git
 
-- 一个 GitHub 总仓库，每台机器独立克隆；当前任务 SB-PLATFORM-001 执行端为 5070，沿用已授权任务分支 `feat/sb-core-skeleton`。历史 SB-CORE-001 / SB-RUNNER-001 为 5070，SB-002B 为 3050。
+- 一个 GitHub 总仓库，每台机器独立克隆；当前任务 SB-E2E-001 执行端为 5070，沿用已授权任务分支 `feat/sb-core-skeleton`。历史 Engine / Runner / Platform 为 5070，SB-002B 为 3050。
 - 同一任务同一时刻只有一个执行端。换机前停止执行、保存检查点，记录验证结果和可接手提交，推送任务分支后再交接。
 - 接手前核对远端、分支、提交、工作区和 `docs/handoffs/<任务编号>.md`。未推送内容不能称为跨机同步。
 - 发现陌生修改、历史分叉或其他任务提交时保留现场，不自动覆盖、合并、变基、reset 或 clean。
@@ -18,7 +18,7 @@
 ## 模块与修改范围
 
 - `frontend/`：Vue 3 + TypeScript + Vite；页面调用统一数据边界，不直接修改市场状态。
-- `backend/`：FastAPI + application/service + PostgreSQL/SQLAlchemy/Alembic。SB-PLATFORM-001 已授权最小持久共享市场；不改变已验收 Runner 协议，不自行进入 Vue/LLM 集成。路由只能调用 application boundary。
+- `backend/`：FastAPI + application/service + PostgreSQL/SQLAlchemy/Alembic。已验收持久共享市场；SB-E2E-001 授权 Vue 与最小 Seller 工程验收入口，路由只能调用 application boundary。研究协议不变，不接真实 LLM 或正式 HumanDriver profile。
 - `references/`：原始材料快照，保持字节不变，不运行包内脚本，不把其根配置复制到总工程根部。
 - `engine/`：独立 Python 实验内核，运行时不依赖 FastAPI、数据库或 UI。SB-CORE-001 获准首次建设骨架；正式消费者模型和智能策略仍未提供，不把 TEST 规则当作研究定案。
 - Policy 只根据授权观察提出结构化动作，Engine 裁决并改变状态；平台通过 application/adapter 层调用，不把研究逻辑写进路由。
@@ -28,7 +28,9 @@
 - 跨进程重试复用原 request ID 和原内容；commit-unknown 不等于失败成交，先查 durable receipt。恢复必须核对源码/协议摘要；不把 snapshot() 当作 restore contract。
 - 参与者客户端长期采用 Web/H5；不建设 Electron、Tauri、Windows EXE、Python GUI 或其他桌面原生客户端。未来 Seller 人工界面也属于 Web/H5，Engine 本身无 UI。
 - 网页账户/实验参与者与消费者模拟器分别建模。未确认的接口必须标为草案。
-- 保留五页顺序、中文布局和购买/不购买路径；不新增 Seller 后台或 Agent 管理 UI。
+- 保留 Buyer 五页顺序、中文布局和购买/不购买路径；允许工程验收用 Seller 操作页，不扩展成完整经营后台或 Agent 管理 UI。
+- 参与者默认使用真实 sb-platform-v1；禁止网络失败回退 local demo。消息与购买先构造本机会有序批次，明确提交才进入平台；未提交不自动 Wait。pending/unknown 不伪称成交，重试复用原 ID/envelope。
+- 角色凭据不放 URL、日志、截图或 Git。手工绑定文件仅存忽略的 `.local/manual/`，浏览器用每标签页 sessionStorage；参与者 UI 不能得到 admin token、全量 DB 或其他 actor 私有资料。
 - 本地模拟必须明确标记，不把网络错误静默切换为模拟成功。Agent 观察/动作不依赖 DOM。
 
 ## 环境与验证

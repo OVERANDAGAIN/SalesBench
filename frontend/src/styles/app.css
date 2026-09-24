@@ -1,4 +1,47 @@
 /* Small Vue/async/accessibility adjustments; the archived prototype stylesheet is retained. */
+.binding-shell { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+.binding-card { max-width: 530px; width: 100%; padding: 32px; }
+.binding-card h1 { margin: 10px 0; }
+.binding-card p { margin: 12px 0; line-height: 1.7; }
+.binding-file { display: grid; gap: 10px; padding: 16px; background: #f4f7f3; border-radius: 10px; margin-top: 20px; }
+.binding-file input { max-width: 100%; }
+.binding-divider { text-align: center; margin: 20px 0; color: #7b877f; }
+.wave-panel { padding: 18px 20px; margin-bottom: 25px; border-left: 4px solid #58715d; }
+.wave-title, .wave-facts, .wave-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 18px; }
+.wave-title .tiny { overflow-wrap: anywhere; }
+.wave-title button { margin-left: auto; }
+.wave-facts { font-size: 13px; margin: 12px 0; }
+.wave-facts span { background: #f1f5f0; border-radius: 6px; padding: 5px 8px; }
+.wave-wait { font-size: 13px; margin: 10px 0; }
+.wave-actions { margin-top: 14px; }
+.batch-list { padding-left: 23px; margin: 12px 0; }
+.batch-list li { padding: 7px 0; overflow-wrap: anywhere; }
+.batch-controls { display: inline-flex; gap: 10px; margin-left: 12px; }
+.receipt { margin-top: 15px; padding: 12px; background: #f6f7fa; font-size: 13px; overflow-wrap: anywhere; }
+.receipt > .tiny { display: block; margin: 5px 0; }
+.receipt ul, .receipt-history { padding-left: 20px; }
+.wave-panel details { margin-top: 12px; font-size: 12px; overflow-wrap: anywhere; }
+.seller-shell { width: min(1440px, 100%); padding: 28px; margin: auto; }
+.seller-header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 20px; margin-bottom: 24px; }
+.seller-header h1 { font-size: 26px; margin: 8px 0; }
+.seller-header p { color: #68766c; font-size: 13px; }
+.seller-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 20px; }
+.seller-section { padding: 22px; margin-bottom: 20px; min-width: 0; }
+.seller-section h2 { font-size: 17px; margin-bottom: 12px; margin-top: 14px; }
+.seller-section li { line-height: 1.8; }
+.seller-section table { font-size: 12px; }
+.seller-section td { overflow-wrap: anywhere; }
+.seller-section td small { display: block; }
+.seller-form { display: grid; gap: 12px; }
+.seller-form label { display: grid; gap: 6px; font-size: 13px; }
+.seller-form input, .seller-form select, .seller-form textarea { width: 100%; min-width: 0; padding: 10px; background: #fff; border: 1px solid #d7ded9; border-radius: 7px; color: #26392c; font: inherit; }
+.seller-form textarea { min-height: 80px; }
+.seller-form button { justify-self: start; }
+.seller-messages { list-style: none; padding: 0; }
+.seller-messages li { border-bottom: 1px solid #edf0eb; padding: 10px 0; overflow-wrap: anywhere; }
+.seller-messages small { color: #778176; }
+.empty-market { padding: 32px; }
+@media (max-width: 800px) { .seller-grid { grid-template-columns: 1fr; } .seller-shell { padding: 16px; } .wave-panel { padding: 15px; } }
 .content { position: relative; }
 .loading-status { position: fixed; right: 18px; top: 88px; z-index: 20; background: #fff; color: #526aab; border: 1px solid #e4e9f2; padding: 5px 12px; border-radius: 8px; font-size: 12px; box-shadow: 0 2px 8px #2034530a; }
 .load-error { padding: 28px; margin: 20px 0; }

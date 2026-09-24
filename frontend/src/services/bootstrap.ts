@@ -1,9 +1,8 @@
 import { createDemoHost } from '../demo/service'
-import { createNotConnectedService } from './notConnected'
 import type { BuyerService } from '../domain/types'
 
-const mode = import.meta.env.VITE_BUYER_SERVICE ?? 'demo'
-export const demoMode = mode === 'demo'
-const host = demoMode ? createDemoHost() : null
-export const buyerService: BuyerService = host ? host.bindBuyer('buyer_001') : createNotConnectedService()
-if (import.meta.hot) import.meta.hot.dispose(() => host?.dispose())
+// Legacy regression only. The participant entry is NetworkApp / MarketClient.
+if (!import.meta.env.DEV || import.meta.env.VITE_BUYER_SERVICE !== 'demo') throw new Error('Local demo requires explicit development mode')
+const host = createDemoHost()
+export const buyerService: BuyerService = host.bindBuyer('buyer_001')
+if (import.meta.hot) import.meta.hot.dispose(() => host.dispose())

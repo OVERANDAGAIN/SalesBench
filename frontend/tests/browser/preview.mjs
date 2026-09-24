@@ -9,7 +9,7 @@ import { chromium } from 'playwright-core'
 const frontend = fileURLToPath(new URL('../..', import.meta.url))
 const root = path.dirname(frontend)
 const config = JSON.parse(await readFile(path.join(root, '.local/runtime.json'), 'utf8'))
-const evidence = path.join(root, 'docs/verification/SB-002B')
+const evidence = path.join(root, 'docs/verification/SB-E2E-001')
 await mkdir(evidence, { recursive: true })
 process.env.TEMP = path.join(config.cache, 'browser-temp')
 process.env.TMP = process.env.TEMP
@@ -33,16 +33,14 @@ try {
   const errors = []
   page.on('pageerror', error => errors.push(error.message))
   await page.goto('http://127.0.0.1:4173')
-  await page.getByRole('heading', { name: '看看商家们的表现', exact: true }).waitFor()
-  await page.getByRole('navigation').getByRole('button', { name: '商品推荐', exact: true }).click()
-  await page.getByRole('heading', { name: '发现适合你的好物', exact: true }).waitFor()
-  const imageStatus = await page.locator('.product-picture img').evaluateAll(images => images.map(img => img.complete && img.naturalWidth > 0))
-  assert.equal(imageStatus.length, 6)
-  assert(imageStatus.every(Boolean), 'A production image failed to load')
+  await page.getByRole('heading', { name: '绑定本场角色', exact: true }).waitFor()
+  assert.equal(await page.getByLabel('Actor token', { exact: true }).getAttribute('type'), 'password')
+  assert.equal((await fetch('http://127.0.0.1:4173/product-placeholder.svg')).status, 200)
   assert.equal(await page.evaluate(() => typeof window.testHost), 'undefined')
   assert.deepEqual(errors, [])
-  await writeFile(path.join(evidence, 'preview-results.json'), JSON.stringify({ checkedAt: new Date().toISOString(), status: 'passed', port: 4173, browser: await browser.version(), productImagesLoaded: 6, testControllerExposed: false, errors, serverStoppedOnExit: true }, null, 2) + '\n')
-  console.log('PASS production preview, Vue navigation, six image resources, no test controller')
+  assert.equal(await page.evaluate(() => typeof window.salesbench), 'undefined')
+  await writeFile(path.join(evidence, 'preview-results.json'), JSON.stringify({ checkedAt: new Date().toISOString(), status: 'passed', port: 4173, browser: await browser.version(), entry: 'real-platform-binding', placeholderLoaded: true, testControllerExposed: false, errors, serverStoppedOnExit: true }, null, 2) + '\n')
+  console.log('PASS production preview, real binding entry, password field, no demo controller')
 } finally {
   await browser?.close()
   if (server.exitCode === null) {

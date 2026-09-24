@@ -1,6 +1,7 @@
 """Local administrative commands. Output never includes database/bearer secrets."""
 
 import argparse
+from pathlib import Path
 import json
 import os
 from uuid import uuid4
@@ -81,7 +82,7 @@ def demo(service):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("task", choices=("init-db", "demo", "recover"))
+    parser.add_argument("task", choices=("init-db", "demo", "recover", "create-manual", "inspect"))
     parser.add_argument("--session-id")
     args = parser.parse_args()
     url = os.environ["SALESBENCH_DATABASE_URL"]
@@ -91,7 +92,15 @@ def main():
     engine, sessions = database(url)
     try:
         service = MarketService(sessions)
-        if args.task == "demo":
+        if args.task == "create-manual":
+            from .manual import create_manual
+            result = create_manual(service, Path(__file__).resolve().parents[2] / ".local/manual")
+        elif args.task == "inspect":
+            from .manual import inspect_market
+            if not args.session_id:
+                parser.error("inspect requires --session-id")
+            result = inspect_market(service, args.session_id)
+        elif args.task == "demo":
             result = demo(service)
         else:
             if not args.session_id:

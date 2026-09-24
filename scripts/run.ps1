@@ -1,6 +1,6 @@
 param(
   [Parameter(Mandatory=$true)]
-  [ValidateSet('install-frontend','install-backend','frontend','backend','typecheck','build','test-frontend','test-backend','test-browser','test-preview','preview')]
+  [ValidateSet('install-frontend','install-backend','frontend','backend','typecheck','build','test-frontend','test-backend','test-browser','test-preview','test-market','preview')]
   [string]$Task
 )
 $ErrorActionPreference = 'Stop'
@@ -55,6 +55,7 @@ if ($Task -in @('backend','install-backend','test-backend')) {
     'test-frontend' { @('run','test') }
     'test-browser' { @('run','test:browser') }
     'test-preview' { @('run','test:preview') }
+    'test-market' { @('run','test:market') }
     'preview' { @('run','preview') }
   }
   Push-Location (Join-Path $root 'frontend')

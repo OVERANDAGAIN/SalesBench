@@ -1,0 +1,97 @@
+{
+  "checkedAt": "2026-09-24T08:57:07.323Z",
+  "status": "passed",
+  "session_id": "manual-b16a3b824bbe4690b81a87c3bcfc2390",
+  "browser": "153.0.4234.48",
+  "steps": [
+    "four isolated actor bindings; real OpenAPI available",
+    "Round procurement waits for both Sellers",
+    "Seller publication only after both ordered batches; Buyers see Listings",
+    "public + private + purchase batch is pending until other Buyer submits",
+    "next Tick Seller feedback and private isolation; price/content visible to same Tick Buyers",
+    "direct purchase versus explicit non-purchase; active/content revisions preserve protocol",
+    "browser reload restores committed balance/orders; backend and PostgreSQL restart continue same session",
+    "post-restart Round continues; two Buyers consume available shared stock",
+    "five Buyer pages, Seller final state, H5 layout and PostgreSQL inspection"
+  ],
+  "runtime": {
+    "status": "completed",
+    "engine_step": 2,
+    "runner_phase": "completed",
+    "next_boundary": null,
+    "published_version": 16
+  },
+  "table_counts": {
+    "actor_bindings": 4,
+    "batch_receipts": 28,
+    "action_receipts": 33,
+    "publications": 17,
+    "journal_entries": 263
+  },
+  "orders": [
+    {
+      "id": "order-000001",
+      "buyer_id": "buyer-1",
+      "seller_id": "seller-a",
+      "listing_id": "seller-a/cup",
+      "product_id": "cup",
+      "quantity": 1,
+      "unit_price_cents": 300,
+      "total_cents": 300,
+      "step": 0,
+      "settlement": "test_immediate",
+      "offer_revision": 1
+    },
+    {
+      "id": "order-000002",
+      "buyer_id": "buyer-1",
+      "seller_id": "seller-b",
+      "listing_id": "seller-b/cup",
+      "product_id": "cup",
+      "quantity": 1,
+      "unit_price_cents": 500,
+      "total_cents": 500,
+      "step": 0,
+      "settlement": "test_immediate",
+      "offer_revision": 1
+    },
+    {
+      "id": "order-000003",
+      "buyer_id": "buyer-1",
+      "seller_id": "seller-a",
+      "listing_id": "seller-a/cup",
+      "product_id": "cup",
+      "quantity": 1,
+      "unit_price_cents": 450,
+      "total_cents": 450,
+      "step": 1,
+      "settlement": "test_immediate",
+      "offer_revision": 5
+    },
+    {
+      "id": "order-000004",
+      "buyer_id": "buyer-2",
+      "seller_id": "seller-a",
+      "listing_id": "seller-a/cup",
+      "product_id": "cup",
+      "quantity": 1,
+      "unit_price_cents": 450,
+      "total_cents": 450,
+      "step": 1,
+      "settlement": "test_immediate",
+      "offer_revision": 5
+    }
+  ],
+  "network": {
+    "GET /api/v1/sessions/{session}/notifications 200": 134,
+    "GET /api/v1/sessions/{session}/observation 200": 134,
+    "GET /api/v1/sessions/{session}/receipts 200": 134,
+    "POST /api/v1/sessions/{session}/actions 202": 28,
+    "GET /api/v1/sessions/{session}/notifications 500": 11
+  },
+  "state_digest": "588c21705cf500bf4d44d2bc82ffd120b0d1206feca8688e303bea6034604237",
+  "private_isolation": "passed",
+  "browser_reload": "passed",
+  "api_pg_restart": "passed",
+  "credential_leaks": 0
+}

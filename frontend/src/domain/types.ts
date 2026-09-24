@@ -6,10 +6,11 @@ export interface Merchant {
   id: string; name: string; initial: string; color: string; tag: string
   description: string; pitch: string; featuredProductId: string
 }
-export interface LeaderboardRow extends Merchant { rank: number; revenueCents: number; sold: number }
+export interface LeaderboardRow extends Merchant { rank: number | null; revenueCents: number | null; sold: number | null }
 export interface Product {
   id: string; merchantId: string; name: string; variant: string; category: string
   priceCents: number; stock: number; imageUrl: string; specs: string[]; description: string
+  offerRevision?: number; contentRevision?: number
 }
 export interface Message {
   id: string; merchantId: string; channel: Channel
@@ -19,9 +20,9 @@ export interface Message {
 export interface Order {
   id: string; productId: string; productName: string; variant: string
   merchantId: string; merchantName: string; unitPriceCents: number
-  quantity: number; totalCents: number; createdAt: string; status: 'simulated_completed'
+  quantity: number; totalCents: number; createdAt: string; status: 'simulated_completed' | 'completed'
 }
-export interface Account { initialBalanceCents: number; spentCents: number }
+export interface Account { initialBalanceCents: number | null; spentCents: number }
 export interface Conversation { merchantId: string; lastMessage: Message }
 export type Query =
   | { view: 'leaderboard' | 'me' }
@@ -29,7 +30,7 @@ export type Query =
   | { view: 'product'; productId: string }
   | { view: 'public' | 'private'; merchantId: string }
 interface ObservationBase {
-  ok: true; schemaVersion: typeof SCHEMA_VERSION; mode: 'local-demo'
+  ok: true; schemaVersion: typeof SCHEMA_VERSION | 'sb-platform-v1'; mode: 'local-demo' | 'network'
   sessionId: string; revision: number; actor: Actor; merchants: Merchant[]
 }
 export type Observation = ObservationBase & (
@@ -43,7 +44,7 @@ export type Observation = ObservationBase & (
 export interface ServiceIssue { code: string; message: string; retryable: boolean }
 export type ObservationResult = Observation | { ok: false; error: ServiceIssue }
 export type Action =
-  | { id: string; type: 'purchase'; payload: { productId: string; quantity: number; expectedUnitPriceCents: number } }
+  | { id: string; type: 'purchase'; payload: { productId: string; quantity: number; expectedUnitPriceCents: number; expectedOfferRevision?: number } }
   | { id: string; type: 'send_public' | 'send_private'; payload: { merchantId: string; text: string } }
 export type ActionResult =
   | { type: 'purchase'; order: Order; balanceCents: number; remainingStock: number }
