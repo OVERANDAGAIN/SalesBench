@@ -2,6 +2,16 @@
 
 2026-09-24，`salesbench-engine` 0.2.0。Runner 位于 `engine/src/salesbench_engine/runner/`，与 Engine 同一个独立 Python 包，零第三方运行时依赖。无需 Vue、FastAPI、数据库或真实模型服务。LLM-first 指协议直接面向模型的冻结观察和结构化批次；不表示已经接入正式模型/策略。
 
+SB-PLATFORM-001 将包升级至 **0.2.1**，只增加下面的可信宿主步进与恢复契约。本文的研究语义、排序、批次失败传播和版本规则不变。平台持久保证见 [PLATFORM.md](PLATFORM.md)，不归独立 Runner 内存缓存承担。
+
+## 可信宿主边界（0.2.1）
+
+- `next_boundary` 返回下一 Wave 或 Round close；`pending_observations()` 从当前发布构造该机会的授权观察，不执行、不追加日志。只供宿主按 actor 过滤，不能把整张映射给参与者。
+- `await advance_boundary()` 只执行一个原有 Wave 或 Round close。与完整 `run()` 使用同一执行路径，不增加 micro-wave；busy/terminal 对象拒绝重入。`run()` 仍是一次完整运行入口，逐边界宿主不要混用它。
+- `restore_committed(records, drivers)` 从初始 setup + 记录的动作恢复全新 Runner，核对 source/protocol/rules、连续序号与全部逻辑记录；接受初始发布、正常 Wave/close、completed、可核对的已记录失败边界，拒绝未完成的日志后缀。返回对象可继续下一个边界；失败/完成对象不可续跑。
+- 恢复保留原有时间戳/transport 审计前缀；只有核对完成后才绑定下一机会的 Driver。恢复不调用模型，不从 snapshot 反序列化内部状态。源码摘要不同需要对应历史代码，数据库 migration 不会自动升级实验 trace。
+- `advance_boundary()` 形成的内存发布只是宿主候选。平台在 DB 事务提交 journal、回执、授权 projection/outbox 后才对外可见；提交失败丢弃候选，从 committed transcript 重新构造。
+
 ## 职责与时间
 
 Engine 裁决资金、库存、报价、权限、订单和单动作原子性。Runner 只管理机会、观察、批次、顺序、发布与审计。Driver 只提出意图，不能得到 Engine 或宿主全量 snapshot。可信 Python Driver 不是恶意代码沙箱；提供给外部模型的是经过授权的序列化观察。
@@ -34,6 +44,7 @@ Round/Tick 编号从 1 开始；采购使用 tick=0。初始发布版本为 0，
 | `drivers.py` | ScriptedDriver、LLMDriver、ModelAdapter、模型请求与 token 预算 |
 | `journal.py` | 宿主审计、状态变化摘要、加锁的进程内动作去重 |
 | `replay.py` | 从初始 setup 重跑记录意图，核对观察、裁决、结果和状态 |
+| `recovery.py` | 校验 committed prefix，恢复下一边界游标、发布、幂等及记录前缀 |
 | `demo.py` | 3 Seller / 4 Buyer 的小型确定性 CLI，不是正式 API |
 
 Wave 定义包含名称、角色、动作集合、批次/消息/purchase 预算。调度循环遍历配置，不为每一 Tick 手写两套流程；V1 校验只接受 `SELLER_STRATEGY → BUYER_ACTION` 两种已实现 Wave，预算可配置。以后增加 conversation micro-wave 要显式扩展协议、能力与验证；本版不接受未支持序列。
@@ -136,4 +147,4 @@ pwsh -File scripts/engine.ps1 build
 - Engine 与 Runner 两层原子性不同：单动作原子；Wave 正常完成才发布但不是整 Wave 回滚事务。异常前缀需要宿主处理，不能把旧发布状态当成当前内部经济状态。
 - FastAPI 后续应通过 application/adapter 创建并管理 Runner，绑定 actor/experiment，输出授权 published projection；不得在路由复制规则、直接 execute 绕开 Wave 或按 HTTP 先后裁决。
 - Vue v0.1 的 productId、UTC、单动作 receipt/subscribe 仍为演示契约。需另定 Listing 映射、purchase expected revision、三种版本（publication/offer/content）与网络 revision、Wave 机会/回执、逻辑时间与诊断时间、私有投影。
-- 持久幂等、跨进程单写者、状态版本/恢复、数据库 commit 与 Wave publish 的协调尚未实现。本任务提供下一步集成基础，没有自动进入 API/PostgreSQL/Vue 联调。
+- 独立 Runner 不承担持久幂等/数据库事务。SB-PLATFORM-001 已在 application 层实现这些能力，见 PLATFORM.md；Vue/真实模型仍未联调。

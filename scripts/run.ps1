@@ -24,13 +24,20 @@ $env:UV_CACHE_DIR = Join-Path $cache 'uv'
 $env:UV_PYTHON_DOWNLOADS = 'never'
 $env:PNPM_HOME = Join-Path $cache 'pnpm-home'
 if ($Task -in @('backend','install-backend','test-backend')) {
+  $platformPath = Join-Path $root '.local/platform.json'
+  if (Test-Path -LiteralPath $platformPath) {
+    $platform = Get-Content -LiteralPath $platformPath -Raw | ConvertFrom-Json
+    $env:SALESBENCH_DATABASE_URL = $platform.database_url
+    $env:SALESBENCH_ADMIN_TOKEN = $platform.admin_token
+    if ($Task -eq 'test-backend') { $env:SALESBENCH_TEST_DATABASE_URL = $platform.database_url }
+  }
   $uv = Resolve-Tool 'uv'
   $python = Resolve-Tool 'python'
   Push-Location (Join-Path $root 'backend')
   try {
     switch ($Task) {
       'install-backend' { & $uv sync --locked --python $python }
-      'backend' { & $uv run --locked --python $python uvicorn app.main:app --host 127.0.0.1 --port 8000 }
+      'backend' { & $uv run --locked --python $python uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1 }
       'test-backend' { & $uv run --locked --python $python pytest -q }
     }
     $code = $LASTEXITCODE

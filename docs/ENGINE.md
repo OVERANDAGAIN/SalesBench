@@ -4,9 +4,11 @@ SB-CORE-001 / 2026-09-23。内核骨架已实现；经济行为仍是明确命�
 
 SB-RUNNER-001 / 2026-09-24：包升级至 0.2.0，新增独立 [Market Wave Runner](RUNNER.md)。以下领域边界继续适用；benchmark 调度以 RUNNER.md 为准。`Purchase` 现在必须传 `expected_offer_revision`，旧调用需要随观察一起取报价版本。本文末尾 36 项测试等为 SB-CORE-001 历史记录，本次验证见 RUNNER 交接记录。
 
+SB-PLATFORM-001：当前包 **0.2.1**，新增 Runner `advance_boundary` / `pending_observations` / `restore_committed` 可信宿主契约；领域对象、研究调度、purchase 裁决和 TEST 经济规则不变。FastAPI 通过 [PLATFORM.md](PLATFORM.md) 的 service 调用 Runner，已实现数据库幂等、提交与恢复；本文中“未来平台”描述保留原骨架阶段背景，以下领域说明仍适用。
+
 ## 位置与职责
 
-独立工程位于 `engine/`，Python 包为 `engine/src/salesbench_engine/`。独立 pyproject、uv.lock 和 `.venv`；零第三方运行时依赖，测试使用标准库 unittest，固定构建后端为 uv_build 0.8.22。没有搬动 frontend/backend，也没有把 Engine 装进既有 backend 环境。
+独立工程位于 `engine/`，Python 包为 `engine/src/salesbench_engine/`。独立 pyproject、uv.lock 和 `.venv`；零第三方运行时依赖，测试使用标准库 unittest，固定构建后端为 uv_build 0.8.22。没有搬动 frontend/backend。平台通过 backend 的锁定本地包依赖安装 Engine，Engine 不反向依赖平台。
 
 Engine 拥有一个 Experiment 的内存状态，校验和裁决动作，生成结果/事件，推进逻辑时间。Policy 只决定意图；身份认证、HTTP、数据库事务、幂等、持久化和通知传输由未来平台 application/adapter 层负责。参与者和未来 Seller 人工界面采用 Web/H5，Engine 无 UI。
 
@@ -114,7 +116,7 @@ RankingPolicy 可直接替换。即时结算集中在 `_transfer` 和采购/购�
 
 建议调用链：Web/H5 → FastAPI 路由 → application/adapter（认证与场次绑定、DTO 转换、幂等/持久化协调）→ Engine。未来后端通过本地包依赖或构建 wheel 安装 `salesbench-engine`，不要复制源码或让 Engine 反向 import backend。
 
-进入持久化开发前，需明确 Engine 草稿发布与数据库提交失败如何协调、持久状态的恢复/版本、跨进程单写者以及幂等边界；当前没有实现 snapshot restore 或数据库持久化。骨架可用于下一阶段集成开发，不能直接当作已就绪的生产共享服务。
+SB-PLATFORM-001 已落实提交与恢复责任：恢复的是已校验的 canonical Runner transcript，不是 snapshot；候选 Engine 执行后只有 PostgreSQL 提交成功的发布可被参与者读取。内核自身仍不提供数据库事务或身份认证。具体保证和未保证故障见 PLATFORM.md。
 
 ## 运行与验证
 

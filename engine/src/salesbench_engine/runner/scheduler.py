@@ -11,7 +11,7 @@ from .codec import InvalidBatch, action_data, digest, parse_batch
 from .drivers import Driver, DriverReply
 from .journal import ActionExecutor, ExecutionFault, Journal, source_digest
 from .protocol import (
-    ActionOutcome, AuthorizedState, DecisionObservation, ENGINE_RULES_VERSION,
+    ActionOutcome, AuthorizedState, Boundary, DecisionObservation, ENGINE_RULES_VERSION,
     MarketConfig, Phase, PROCUREMENT, PROTOCOL_VERSION, PublicSnapshot,
     RESOLVER_VERSION, Role, RuntimeConfig, WaveContext, WaveDefinition,
 )
@@ -47,11 +47,44 @@ class Runner:
         self._version = -1
         self._published: dict[str, AuthorizedState] = {}
         self._supply = {}
+        self._busy = False
+        self._cursor = 0
+        self._round_start = None
+        self._plan = tuple(self._boundaries())
         self.journal.append("manifest", protocol=PROTOCOL_VERSION, resolver=RESOLVER_VERSION,
                             engine_rules=ENGINE_RULES_VERSION, source_digest=source_digest(),
                             setup=setup, market_config=config, runtime_config=runtime,
                             drivers={actor: self._drivers[actor].configuration() for actor in sorted(expected)})
         self._publish("initial")
+
+    def _boundaries(self):
+        for round_number in range(1, self.config.max_rounds + 1):
+            yield Boundary(WaveContext(round_number, 0, PROCUREMENT.name), PROCUREMENT)
+            for tick in range(1, self.config.ticks_per_round + 1):
+                for wave in self.config.waves:
+                    yield Boundary(WaveContext(round_number, tick, wave.name), wave)
+            yield Boundary(WaveContext(round_number, self.config.ticks_per_round, self.config.waves[-1].name), None)
+
+    @property
+    def published_version(self) -> int:
+        return self._version
+
+    @property
+    def next_boundary(self) -> Boundary | None:
+        if self.phase in (Phase.COMPLETED, Phase.FAILED):
+            return None
+        return self._plan[self._cursor]
+
+    def pending_observations(self) -> dict[str, DecisionObservation]:
+        """Prepare the next opportunity from the last publication, without running it."""
+        if self._busy:
+            raise RuntimeError("Cannot prepare a boundary while Runner is executing")
+        boundary = self.next_boundary
+        if boundary is None or boundary.wave is None:
+            return {}
+        roster = self._setup.sellers if boundary.wave.role == Role.SELLER else self._setup.buyers
+        return {actor.id: self._decision(actor.id, boundary.wave, boundary.context)
+                for actor in sorted(roster, key=lambda a: a.id)}
 
     def observe(self, actor_id: str) -> AuthorizedState:
         """Last completely published state only, including while a Wave commits."""
@@ -89,10 +122,11 @@ class Runner:
                             order=order, priorities={actor: priority(self.config, self.context, purpose, actor) for actor in order})
         return order
 
-    def _decision(self, actor: str, wave: WaveDefinition) -> DecisionObservation:
+    def _decision(self, actor: str, wave: WaveDefinition, context: WaveContext | None = None) -> DecisionObservation:
+        context = context or self.context
         opportunity = digest({"design_id": self.config.design_id, "experiment_id": self._setup.experiment.id,
-                              "context": self.context, "actor_id": actor})
-        return DecisionObservation(self.context, opportunity, wave, self._published[actor],
+                              "context": context, "actor_id": actor})
+        return DecisionObservation(context, opportunity, wave, self._published[actor],
                                    self._supply[actor] if wave == PROCUREMENT else None)
 
     async def _collect(self, observations):
@@ -182,28 +216,42 @@ class Runner:
         self._publish("wave_completed")
 
     async def run(self):
-        if self.phase != Phase.CREATED:
+        if self.phase != Phase.CREATED or self._busy:
             raise RuntimeError("Runner is single-use; replay into a fresh Runner")
+        while self.phase not in (Phase.COMPLETED, Phase.FAILED):
+            await self.advance_boundary()
+        return self.economic_state()
+
+    async def advance_boundary(self):
+        """Run one existing Wave or Round close, for a trusted transactional host.
+
+        This computes a candidate in memory, NOT a durable commit. A platform
+        must discard this instance on commit failure and restore its transcript.
+        """
+        if self._busy or self.phase in (Phase.COMPLETED, Phase.FAILED):
+            raise RuntimeError("No runnable boundary or Runner already executing")
+        self._busy = True
         try:
-            for round_number in range(1, self.config.max_rounds + 1):
-                round_start = self._engine.snapshot()
-                self.context = WaveContext(round_number, 0, PROCUREMENT.name)
-                await self._wave(PROCUREMENT)
-                for tick in range(1, self.config.ticks_per_round + 1):
-                    for wave in self.config.waves:
-                        self.context = WaveContext(round_number, tick, wave.name)
-                        await self._wave(wave)
+            boundary = self._plan[self._cursor]
+            self.context = boundary.context
+            if boundary.wave is not None:
+                if boundary.wave == PROCUREMENT:
+                    self._round_start = self._engine.snapshot()
+                await self._wave(boundary.wave)
+            else:
                 self._phase(Phase.CLOSING_ROUND)
                 result = self._engine.advance(1)
                 round_end = self._engine.snapshot()
-                new_orders = round_end.orders[len(round_start.orders):]
-                self.journal.append("round_closed", round=round_number, result=result,
+                new_orders = round_end.orders[len(self._round_start.orders):]
+                self.journal.append("round_closed", round=self.context.round, result=result,
                                     statistics={"order_count": len(new_orders), "units_sold": sum(o.quantity for o in new_orders),
                                                 "gross_sales_cents": sum(o.total_cents for o in new_orders),
-                                                "procurement_count": len(round_end.procurements) - len(round_start.procurements)},
+                                                "procurement_count": len(round_end.procurements) - len(self._round_start.procurements)},
                                     state_digest=digest(round_end))
                 self._publish("round_closed")
-            self._phase(Phase.COMPLETED)
+            self._cursor += 1
+            if self._cursor == len(self._plan):
+                self._phase(Phase.COMPLETED)
         except asyncio.CancelledError:
             self._fail("RUN_CANCELLED")
             raise
@@ -211,6 +259,8 @@ class Runner:
             self._fail(error.code, error.action_id)
         except Exception as error:
             self._fail(f"RUNNER_ERROR:{type(error).__name__}")
+        finally:
+            self._busy = False
         return self.economic_state()
 
     def _fail(self, code, action_id=None):

@@ -2,7 +2,9 @@ import asyncio
 
 import httpx
 
-from app.main import app
+from app.main import create_app
+
+app = create_app(auto_run=False)
 
 
 def test_health_without_database_or_credentials():
@@ -11,7 +13,7 @@ def test_health_without_database_or_credentials():
     assert response.json() == {"status": "ok", "scope": "api_process"}
 
 
-def test_business_route_is_not_implemented():
+def test_unbound_legacy_action_route_is_not_exposed():
     response = asyncio.run(request("POST", "/actions"))
     assert response.status_code == 404
 

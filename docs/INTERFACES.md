@@ -1,10 +1,14 @@
 # 接口与职责 v0.1 草案
 
+SB-PLATFORM-001 更新：真实服务使用独立 `sb-platform-v1` envelope，规范见 [PLATFORM.md](PLATFORM.md)。`/api/v1/sessions/...` 通过 actor token 绑定身份，提交带 publication version / opportunity ID 的有限批次；持久 receipt 和通知游标由平台提供。下文 **仅保留 Vue 本地演示契约**，没有替换现有 BuyerService，也不是当前 HTTP API 文档。
+
+接入差异：`productId` 需映射 Listing；purchase 必须带 expected price / offer revision；一个 HTTP 请求表示完整机会批次（单动作也包装成批次），不立即购买；已提交 publication 与通知游标同版本，Listing 两种 revision 独立；UTC 请求时间不能代替 Round/Tick/Wave/step。旧 `unknown receipt` 需用原 ID 和原 envelope 重试，不能生成新 ID。参与者只读自己的 observation/receipt，subscribe 后续使用 durable invalidation boundary，不广播 journal。用户账户体系、UI 状态与 actor binding 仍不能混为一体。
+
 SB-RUNNER-001 更新：新增 [RUNNER.md](RUNNER.md)，明确 benchmark 的 Round/Tick/Wave、冻结观察、统一发布、offer/content revision、进程内幂等与审计重放。下文继续是历史 Vue 演示契约，不自动转成 Runner 协议。平台后续必须区分 publication version / offer_revision / content_revision / 网络通知 revision；购买要映射 listing_id、expected price 和 expected offer revision。Runner 的 Wave 调度不能被 HTTP 到达顺序替代，HumanDriver 尚未实现。
 
 SB-CORE-001 更新：下文保留 SB-002B 的 Vue 演示契约作为对照，不自动升级为正式协议。独立 Python Engine 骨架已建设，领域拆分、step、同步 Result、Policy 与平台适配差异见 [ENGINE.md](ENGINE.md)。后续业务 API 接入时重新确认 DTO、幂等、通知和持久化提交边界。
 
-状态：**DRAFT / 尚未与 Python 主体确认**。Python 实验主体、Buyer/Seller 策略、消费者模型未提供。
+状态：**历史 Vue DRAFT / 尚未完成网络 DTO 对齐**。Engine/Runner/平台已实现；正式 Buyer/Seller 策略、消费者模型仍未提供。
 本文只约束本轮 Vue 和可替换的异步演示服务；不是已定案的正式 HTTP API。
 命名统一由 `frontend/src/domain/types.ts` 实现。所有金额是整数分；时间使用 ISO 8601 UTC；展示层转本地时间。
 

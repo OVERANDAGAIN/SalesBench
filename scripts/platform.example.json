@@ -1,0 +1,8 @@
+{
+  "database_url": "postgresql+psycopg://LOCAL_USER:LOCAL_PASSWORD@127.0.0.1:55432/salesbench_platform",
+  "admin_token": "REPLACE_WITH_RANDOM_LOCAL_SECRET",
+  "pg_bin": "D:\\DevTools\\postgresql\\17.11-4\\pgsql\\bin",
+  "pg_data": "D:\\DevData\\SalesBench\\postgres-17",
+  "pg_log": "D:\\DevData\\SalesBench\\postgres-17.log",
+  "pg_port": 55432
+}

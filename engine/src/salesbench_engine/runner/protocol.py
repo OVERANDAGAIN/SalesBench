@@ -99,6 +99,13 @@ class WaveContext:
 
 
 @dataclass(frozen=True)
+class Boundary:
+    """Trusted-host scheduling boundary, not an actor action or new Wave kind."""
+    context: WaveContext
+    wave: WaveDefinition | None  # None means the existing Round close.
+
+
+@dataclass(frozen=True)
 class ActionOutcome:
     action_id: str
     status: str

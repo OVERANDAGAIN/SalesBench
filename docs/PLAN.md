@@ -1,6 +1,14 @@
 # 总计划
 
-## 当前任务 SB-RUNNER-001
+## 当前任务 SB-PLATFORM-001
+
+2026-09-24，用户验收 SB-RUNNER-001 后授权 Persistent Market Service。执行端 5070，沿用 `feat/sb-core-skeleton`；开工 HEAD `be7bb73335d2c59f22035aef5ceca564f863184a` 与 origin 一致，main 仍为 `2ab44d79e5d28d5c0c17b17e3cdb2a5768579408`，用户 `.idea/` 原样保留。
+
+已实现 FastAPI application boundary、PostgreSQL/SQLAlchemy/Alembic、actor binding、跨进程批次幂等、每场 fencing、原子提交 journal/receipt/publication/projection/outbox、canonical transcript 恢复与真实 PostgreSQL 故障验证。Engine 0.2.1 只增加可信宿主边界步进/恢复接口，不改变 Round/Tick/Wave/购买裁决语义。架构见 [PLATFORM.md](PLATFORM.md)，实际验证与可接手点见 [SB-PLATFORM-001](handoffs/SB-PLATFORM-001.md)。
+
+本次完成后停止，不自行接 Vue NetworkBuyerService、真实 LLM、HumanDriver、正式研究策略或公网部署。以下各阶段为历史记录，原“本轮不建数据库”不再限制本次明确授权。
+
+## SB-RUNNER-001（历史）
 
 2026-09-24 用户确认 LLM-first 的 Market Round → Market Tick → configurable Wave，并授权实施 Market Wave Runner。执行端 5070；沿用授权分支 `feat/sb-core-skeleton`，开工 HEAD `c22978001cabb8613919b1daf2ba3eec01ed5eff` 与远端一致。该提交回退了此前未实施的协议文档，文件树与已交付 Engine 提交 `d3cbc0352d85b1c6a1ca84472265a95f7efe5383` 一致。main 保持 `2ab44d79e5d28d5c0c17b17e3cdb2a5768579408`。
 

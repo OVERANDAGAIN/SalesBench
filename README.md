@@ -2,12 +2,29 @@
 
 SalesBench 总工程：买方 Web/H5 前端、平台后端与独立 Python 实验内核按职责组织。
 
-当前任务：SB-RUNNER-001，机器 5070，沿用授权分支 `feat/sb-core-skeleton`。
+当前任务：SB-PLATFORM-001，机器 5070，沿用授权分支 `feat/sb-core-skeleton`。
 独立 `engine/` 已实现采购、库存、上架/调价、公开/私聊、购买、资金/订单，以及 Market Wave Runner。每 Round 先采购，再运行固定数量 Tick；V1 每 Tick 为 Seller Strategy → Buyer Action，同 Wave 冻结观察、并发收集、统一执行/发布，正常 Round 结束才推进一次 Engine step。消费者与 Seller 正式策略尚未实现，当前经济行为是 TEST 规则。
 
 SB-002B 基础工程和 Vue 买方端已经用户验收；接口 v0.1 仍是待对齐草案。
 本地演示刷新即重置；消息先发送成功，稍后出现预设回复；购买与余额、库存、订单和演示榜单共用同一服务。
-Vue 仍运行自己的本地演示，FastAPI 仍只有 `/health`；尚未调用 Python Engine，没有真实业务 API、共享数据库或跨浏览器状态。参与者和未来 Seller 人工客户端仅采用 Web/H5，不建设桌面原生客户端。
+FastAPI 现在通过 `MarketService` 调用真实 Engine/Runner，PostgreSQL 保存会话、绑定、批次回执、canonical transcript 和授权发布投影，支持共享访问、幂等重试和进程重启恢复。Vue 仍运行自己的本地演示，尚未接入该网络服务；没有改变五页 UI 或研究协议。参与者和未来 Seller 人工客户端仅采用 Web/H5。
+
+## 持久市场服务
+
+先按 [ENVIRONMENT.md](docs/ENVIRONMENT.md) 配好各机独立的 PostgreSQL 与忽略的 `.local/platform.json`。5070 已完成本机初始化；数据不进入 Git。
+
+```powershell
+pwsh -File scripts/platform.ps1 pg-start
+pwsh -File scripts/platform.ps1 install
+pwsh -File scripts/platform.ps1 migrate
+pwsh -File scripts/platform.ps1 test
+pwsh -File scripts/platform.ps1 demo
+pwsh -File scripts/platform.ps1 serve
+# API 终端 Ctrl+C 后：
+pwsh -File scripts/platform.ps1 pg-stop
+```
+
+API 仅监听 `127.0.0.1:8000`，PostgreSQL 仅监听 `127.0.0.1:55432`。动作提交先获得 durable pending receipt；同 Wave 收齐后才由 Runner 裁决，并与新 observation version 一起提交。提交结果未知时复用原 ID 查询/重试。数据模型、API、事务/恢复保证与限制见 [PLATFORM.md](docs/PLATFORM.md)，本次结果见 [SB-PLATFORM-001](docs/handoffs/SB-PLATFORM-001.md)。
 
 ## 独立 Engine
 
@@ -21,7 +38,7 @@ pwsh -File .\scripts\engine.ps1 replay -JournalPath .local/wave-trace.json
 
 使用本机 `.local/runtime.json` 中的 Python 3.12/uv，无需启动任何服务。Runner CLI 使用 ScriptedDriver；LLMDriver 提供可注入异步 ModelAdapter 的请求/预算/结果边界，测试使用 fake adapter，没有真实模型调用。Journal 含私有数据，仅供宿主审计。
 
-内核见 [ENGINE.md](docs/ENGINE.md)，调度、版本、故障和重放见 [RUNNER.md](docs/RUNNER.md)，本任务交接见 [SB-RUNNER-001](docs/handoffs/SB-RUNNER-001.md)。
+内核见 [ENGINE.md](docs/ENGINE.md)，调度、版本、故障和重放见 [RUNNER.md](docs/RUNNER.md)。Engine 独立运行仍不需要平台或数据库。
 
 ## 本机快速开始
 
@@ -32,13 +49,14 @@ pwsh -File .\scripts\run.ps1 frontend
 
 打开 http://127.0.0.1:5173 。该终端按 Ctrl+C 停止。当前机器工具路径已保存在忽略的 `.local/runtime.json`。
 其他机器先按环境文档配置各自真实工具位置并执行锁定安装。
-API 单独启动：`pwsh -File .\scripts\run.ps1 backend`；`GET http://127.0.0.1:8000/health` 只说明进程响应。
+API 单独启动：`pwsh -File .\scripts\run.ps1 backend`（存在 `.local/platform.json` 时加载数据库配置，需先启动 PG 并迁移）；`GET http://127.0.0.1:8000/health` 只说明进程响应，不是 DB readiness。
 完整检查、安装、构建预览和停止方式见环境文档。
 
 - [共同计划](docs/PLAN.md)
 - [环境与命令](docs/ENVIRONMENT.md)
 - [接口与职责 v0.1 草案](docs/INTERFACES.md)
-- [Runner 任务进度与接力](docs/handoffs/SB-RUNNER-001.md)
+- [平台任务进度与接力](docs/handoffs/SB-PLATFORM-001.md)
+- [历史 Runner 接力](docs/handoffs/SB-RUNNER-001.md)
 - [历史 Engine 骨架接力](docs/handoffs/SB-CORE-001.md)
 - [历史 Vue 验证与截图](docs/verification/SB-002B/README.md)
 - [SB-002B 历史接力](docs/handoffs/SB-002B.md)
